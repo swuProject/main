@@ -4,6 +4,7 @@ import { TextInput } from "react-native";
 const SecureInput = () => {
     return (
         <TextInput 
+            textContentType="password"
             secureTextEntry = {true}
             autoCapitalize="none"
             autoCorrect={false}
