@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { TouchableOpacity, Text, View } from 'react-native';
 import MyButton from './MyButton';
 import EmailTextbox from './EmailTextbox';
