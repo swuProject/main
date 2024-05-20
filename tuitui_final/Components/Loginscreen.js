@@ -24,6 +24,7 @@ function Loginscreen({navigation}) {
                     placeholder="Password"
                     keyboardType="email-address"
                     secureTextEntry = {true}
+                    textContentType='oneTimeCode'
                     autoCapitalize="none"
                     autoCorrect={false}
                     style={styles.inputBox}
