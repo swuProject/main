@@ -1,12 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
-import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, View, Text, SafeAreaView, TouchableOpacity, TextInput, Alert } from 'react-native';
 
 function Loginscreen({navigation}) {
+  const [account, setAccount] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLogin = async () => {
+    const apiURL = 'http://13.124.69.147:8080/api/user/login';  // 서버의 로그인 API URL
+
+    try {
+      const response = await fetch(apiURL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          account,
+          password,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('서버 오류');
+      }
+
+      const data = await response.json();
+
+      if (data.loginStatus === '로그인 성공') {
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('로그인 실패', '아이디 또는 비밀번호가 틀렸습니다');
+      }
+    } catch (error) {
+      Alert.alert('에러', error.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
         <View style={{flex: 1}} />
-        <View style={{flex: 3}}>
+        <View style={{flex: 2}}>
             <View style={styles.logoArea}>
                 <Text style={styles.logoText}>
                     TuiTui
@@ -15,23 +49,20 @@ function Loginscreen({navigation}) {
             <View style={styles.inputArea}>
                 <TextInput 
                     placeholder= "E-mail"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
                     style={styles.inputBox}
+                    value={account}
+                    onChangeText={setAccount}
                 />
                 <TextInput 
                     placeholder="Password"
-                    keyboardType="email-address"
-                    secureTextEntry = {true}
-                    textContentType='oneTimeCode'
-                    autoCapitalize="none"
-                    autoCorrect={false}
                     style={styles.inputBox}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
                 />
             </View>
             <View style={styles.btnArea}>
-                <TouchableOpacity style={styles.btnBlue}>
+                <TouchableOpacity style={styles.btnBlue} onPress={handleLogin}>
                     <Text style={{color: 'white', fontWeight: 'bold', fontSize: 15}}>로그인</Text>
                 </TouchableOpacity>
             </View>
