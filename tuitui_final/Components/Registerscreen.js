@@ -35,10 +35,10 @@ function Registerscreen({ navigation: { navigate } }) {
       const result = await response.json();
 
       if (response.ok) {
-        alert('Registration successful');
+        alert('환영합니다');
         navigate('Login'); // Replace with your login screen
       } else {
-        alert(`Registration failed: ${result.message}`);
+        alert(`회원가입 실패: ${result.message}`);
       }
     } catch (error) {
       alert(`An error occurred: ${error.message}`);
