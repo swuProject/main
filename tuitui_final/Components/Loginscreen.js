@@ -67,7 +67,7 @@ function Loginscreen({navigation}) {
                 </TouchableOpacity>
             </View>
             <View style={styles.registerArea}>
-                <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <TouchableOpacity onPress={() => navigation.navigate('회원가입')}>
                     <Text style={{color: '#5B93FF', fontWeight: 'bold' , marginBottom: hp(1)}}>회원가입</Text>
                 </TouchableOpacity>
                 <TouchableOpacity>

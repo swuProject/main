@@ -15,7 +15,7 @@ const App = () => {
       <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={Loginscreen} options={{headerShown: false}}/>
         <Stack.Screen name="Home" component={Homescreen} options={{headerShown: false}}/>
-        <Stack.Screen name="Register" component={Registerscreen} options={{headerBackTitleVisible: false}}/>
+        <Stack.Screen name="회원가입" component={Registerscreen} options={{headerBackTitleVisible: false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
