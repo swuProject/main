@@ -36,12 +36,12 @@ function Registerscreen({ navigation: { navigate } }) {
 
       if (response.ok) {
         alert('환영합니다');
-        navigate('Login'); // Replace with your login screen
+        navigate('Login');
       } else {
-        alert(`회원가입 실패: ${result.message}`);
+        alert(`가입 실패: ${result.message}`);
       }
     } catch (error) {
-      alert(`An error occurred: ${error.message}`);
+      alert(`오류: ${error.message}`);
     }
   };
 
