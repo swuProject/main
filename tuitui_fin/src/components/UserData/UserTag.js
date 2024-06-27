@@ -36,11 +36,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginLeft: 10,
+    backgroundColor: 'white',
   },
   img: {
     width: 32,
     height: 32,
     borderRadius: 25,
+    backgroundColor: 'white',
   },
   font: {
     fontSize: 14,

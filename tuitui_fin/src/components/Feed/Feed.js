@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
   capsuleContent: {
     marginTop: 4,
     fontSize: 16,
+    padding: 8,
   },
 });
 

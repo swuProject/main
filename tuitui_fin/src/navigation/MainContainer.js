@@ -1,7 +1,7 @@
 import * as React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Text } from "react-native";
 
 // font
 import { FontAwesome } from "@expo/vector-icons";
@@ -55,10 +55,14 @@ const HomeStackScreen = ({ navigation }) => {
         name="Home"
         component={HomeScreen}
         options={{
-          title: "HomeScreen", // 여기가 홈화면 헤더
+          title: "", // 여기가 홈화면 헤더
+          headerBackTitleVisible: false,
+          headerLeft: () => (
+            <Text style={{fontSize:32, marginLeft:16, letterSpacing:8}}>TuiTui</Text>
+          ),
           headerRight: () => (
             <TouchableOpacity onPress={goToProfile}>
-              <FontAwesome name="user-circle-o" size={24} color="black" />
+              <FontAwesome style={{marginRight:16}} name="user-o" size={24} color="black"/>
             </TouchableOpacity> // 프로필 화면으로 이동 버튼
           ),
         }}
@@ -100,6 +104,8 @@ const MainContainer = () => {
     <Tab.Navigator
       initialRouteName={homeName}
       screenOptions={({ route }) => ({
+        tabBarActiveTintColor: '#89a6fc',
+        tabBarShowLabel: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
           let rn = route.name;
@@ -107,13 +113,13 @@ const MainContainer = () => {
           if (rn === homeName) {
             iconName = focused ? "home" : "home-outline";
           } else if (rn === mapName) {
-            iconName = focused ? "map" : "map-outline";
+            iconName = focused ? "map" : "location-outline";
           } else if (rn === cameraName) {
             iconName = focused ? "camera" : "camera-outline";
           } else if (rn === alarmName) {
-            iconName = focused ? "alarm" : "alarm-outline";
+            iconName = focused ? "alarm" : "notifications-outline";
           } else if (rn === chatName) {
-            iconName = focused ? "chatbox" : "chatbox-outline";
+            iconName = focused ? "chatbox" : "chatbox-ellipses-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
