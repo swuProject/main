@@ -71,6 +71,7 @@ const HomeStackScreen = ({ navigation }) => {
         name="Profile"
         component={ProfileScreen}
         options={{
+          headerBackTitleVisible: false,
           headerRight: () => (
             <View style={styles.profileContainer}>
               {/* 프로필 화면 옵션으로 이동 버튼 */}
@@ -89,11 +90,13 @@ const HomeStackScreen = ({ navigation }) => {
       <HomeStack.Screen
         name="ProfileFix"
         component={ProfileFixScreen}
+        options={{headerBackTitleVisible: false}}
       ></HomeStack.Screen>
 
       <HomeStack.Screen
         name="ProfileOption"
         component={ProfileOptionScreen}
+        options={{headerBackTitleVisible: false}}
       ></HomeStack.Screen>
     </HomeStack.Navigator>
   );
