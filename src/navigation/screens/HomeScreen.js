@@ -19,15 +19,28 @@ const GetCapsule = async (page, limit) => {
   return data;
 };
 
+const GetProfileImg = async () => {
+  const response = await fetch("http://13.124.69.147:8080/api/profile");
+  const data = await response.json();
+  return data;
+};
+
 // 유저아이디, 내용, 이미지 출력
-const Item = ({ writeUser, content, imageList }) => {
+const Item = ({ writeUser, content, imageList, profileImg }) => {
   // imageList 배열의 첫 번째 객체의 imagePath를 사용.
   const imageUrl =
     imageList && imageList.length > 0 ? imageList[0].imagePath : null;
 
   return (
     <View style={styles.item}>
-      <Text style={styles.title}>{writeUser}</Text>
+      <View style={styles.userContainer}>
+        {profileImg ? (
+          <Image style={styles.profileImage} source={{ uri: profileImg }} />
+        ) : (
+          <Text>프로필 이미지 없음</Text>
+        )}
+        <Text style={styles.title}>{writeUser}</Text>
+      </View>
       {imageUrl ? (
         <Image style={styles.image} source={{ uri: imageUrl }} />
       ) : (
@@ -40,6 +53,7 @@ const Item = ({ writeUser, content, imageList }) => {
 
 const HomeScreen = () => {
   const [data, setData] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
@@ -47,9 +61,22 @@ const HomeScreen = () => {
   const fetchData = async () => {
     if (loading) return;
     setLoading(true);
-    const result = await GetCapsule(page, 10);
-    console.log("Fetched data:", result); // 데이터 확인용 로그
-    setData((prevData) => [...prevData, ...result]);
+    const capsuleResult = await GetCapsule(page, 10);
+    const profileResult = await GetProfileImg();
+
+    // 데이터 병합 writeUser와 nickname이 일치하는 경우 profileImg를 가져와서 병합된 데이터에 추가
+    const mergedData = capsuleResult.map((capsule) => {
+      const profile = profileResult.find(
+        (profile) => profile.nickname === capsule.writeUser
+      );
+      return {
+        ...capsule,
+        profileImg: profile ? profile.profileImg : null,
+      };
+    });
+
+    // console.log("Fetched data:", mergedData); // 데이터 확인용 로그
+    setData((prevData) => [...prevData, ...mergedData]);
     setPage((prevPage) => prevPage + 1);
     setLoading(false);
   };
@@ -77,6 +104,7 @@ const HomeScreen = () => {
             content={item.content}
             writeUser={item.writeUser}
             imageList={item.imageList} // imageList 배열 전달
+            profileImg={item.profileImg} // profileImg 전달
           />
         )}
         keyExtractor={(item) => item.capsuleId.toString()}
@@ -96,7 +124,7 @@ const styles = StyleSheet.create({
   },
   item: {
     backgroundColor: "white",
-    padding: 10,
+    padding: 10, // 여기 값을 0으로 주면 img 좌우로 꽉참.
     marginVertical: 8,
     marginHorizontal: 0,
   },
@@ -109,9 +137,20 @@ const styles = StyleSheet.create({
   },
   image: {
     flex: 1,
-    width: null,
+    width: "100%",
     height: 200,
     marginTop: 8,
+  },
+  userContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 25,
+    marginTop: 8,
+    marginRight: 12,
   },
 });
 
