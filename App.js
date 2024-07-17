@@ -14,6 +14,7 @@ import React from "react";
 import "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 import Loginscreen from "./Components/Loginscreen";
 import Registerscreen from "./Components/Registerscreen";
@@ -38,7 +39,21 @@ const App = () => {
         <Stack.Screen
           name="Register"
           component={Registerscreen}
-          options={{ headerBackTitleVisible: false }}
+          options={{ 
+            title: "회원가입",
+            headerTitleStyle: {
+              fontSize: 24,
+              fontWeight: 'bold',
+            },
+            headerBackImage: () => (
+              <Ionicons 
+                name="chevron-back-outline" 
+                size={24} 
+                color="black" 
+                style={{ paddingLeft: 10 }}
+              />
+            ),
+            headerBackTitleVisible: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>

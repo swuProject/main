@@ -1,7 +1,8 @@
-import * as React from "react";
+import React, { useState, useEffect } from 'react';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // font
 import { FontAwesome } from "@expo/vector-icons";
@@ -18,7 +19,6 @@ import ChatScreen from "./screens/ChatScreen";
 import ProfileScreen from "./screens/ProfileScreen";
 import ProfileOptionScreen from "./screens/PrifileOptionScreen";
 import ProfileFixScreen from "./screens/PrifileFixScreen";
-import { TouchableOpacity } from "react-native-gesture-handler";
 
 // Screen names
 const homeName = "home";
@@ -37,32 +37,48 @@ const ChatStack = createStackNavigator();
 
 // 홈 스택화면 (프로필 화면)
 const HomeStackScreen = ({ navigation }) => {
-  //프로파일 화면으로 이동하는 네비게이션 함수
-  const goToProfile = (e) => {
+  const [nickname, setNickname] = useState("");
+
+  useEffect(() => {
+    const fetchNickname = async () => {
+      try {
+        const storedNickname = await AsyncStorage.getItem('nickname');
+        if (storedNickname) {
+          setNickname(storedNickname);
+        }
+      } catch (error) {
+        console.error('닉네임 불러오기 오류:', error);
+      }
+    };
+    fetchNickname();
+  }, []);
+
+  const goToProfile = () => {
     navigation.navigate("Profile");
   };
-  //프로파일 옵션화면으로 이동하는 네비게이션 함수
-  const goToProfileOption = (e) => {
+
+  const goToProfileOption = () => {
     navigation.navigate("ProfileOption");
   };
-  //프로파일 수정화면으로 이동하는 네비게이션 함수
-  const goToProfileFix = (e) => {
+
+  const goToProfileFix = () => {
     navigation.navigate("ProfileFix");
   };
+
   return (
     <HomeStack.Navigator>
       <HomeStack.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          title: "", // 여기가 홈화면 헤더
+          title: "", // 홈화면 헤더
           headerBackTitleVisible: false,
           headerLeft: () => (
-            <Text style={{fontSize:32, marginLeft:16, letterSpacing:8}}>TuiTui</Text>
+            <Text style={styles.headerTitle}>TuiTui</Text>
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={goToProfile}>
-              <FontAwesome style={{marginRight:16}} name="user-o" size={24} color="black"/>
+            <TouchableOpacity onPress={goToProfile} style={styles.headerIconButton}>
+              <FontAwesome name="user-o" size={24} color="black"/>
             </TouchableOpacity> // 프로필 화면으로 이동 버튼
           ),
         }}
@@ -71,33 +87,63 @@ const HomeStackScreen = ({ navigation }) => {
         name="Profile"
         component={ProfileScreen}
         options={{
+          title: "",
           headerBackTitleVisible: false,
+          headerLeft: () => (
+            <View style={styles.headerLeft}>
+              <Text style={styles.nickname}>{nickname}</Text>
+            </View>
+          ),
           headerRight: () => (
             <View style={styles.profileContainer}>
-              {/* 프로필 화면 옵션으로 이동 버튼 */}
-              <TouchableOpacity onPress={goToProfileFix}>
+              <TouchableOpacity onPress={goToProfileFix} style={styles.iconButton}>
                 <MaterialCommunityIcons name="pencil" size={24} color="black" />
               </TouchableOpacity>
-              {/* 프로필 화면 수정으로 이동 버튼 */}
-              <TouchableOpacity onPress={goToProfileOption}>
+              <TouchableOpacity onPress={goToProfileOption} style={styles.iconButton}>
                 <Feather name="settings" size={24} color="black" />
               </TouchableOpacity>
             </View>
           ),
         }}
-      ></HomeStack.Screen>
-
+      />
       <HomeStack.Screen
         name="ProfileFix"
         component={ProfileFixScreen}
-        options={{headerBackTitleVisible: false}}
-      ></HomeStack.Screen>
-
+        options={{ 
+          title: "프로필 수정",
+          headerTitleStyle: {
+            fontSize: 24,
+            fontWeight: 'bold',
+          },
+          headerBackImage: () => (
+            <Ionicons 
+              name="chevron-back-outline" 
+              size={24} 
+              color="black" 
+              style={{ paddingLeft: 10 }}
+            />
+          ),
+          headerBackTitleVisible: false }}
+      />
       <HomeStack.Screen
         name="ProfileOption"
         component={ProfileOptionScreen}
-        options={{headerBackTitleVisible: false}}
-      ></HomeStack.Screen>
+        options={{ 
+          title: "설정",
+          headerTitleStyle: {
+            fontSize: 24,
+            fontWeight: 'bold',
+          },
+          headerBackImage: () => (
+            <Ionicons 
+              name="chevron-back-outline" 
+              size={24} 
+              color="black" 
+              style={{ paddingLeft: 10 }}
+            />
+          ),
+          headerBackTitleVisible: false }}
+      />
     </HomeStack.Navigator>
   );
 };
@@ -144,8 +190,30 @@ const MainContainer = () => {
 
 const styles = StyleSheet.create({
   profileContainer: {
-    flexDirection: "row",
-    margin: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  headerTitle: {
+    fontSize: 32,
+    marginLeft: 16,
+    letterSpacing: 8,
+  },
+  nickname: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  iconButton: {
+    marginLeft: 15,
+  },
+  headerIconButton: {
+    marginRight: 16,
   },
 });
 

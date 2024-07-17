@@ -1,51 +1,48 @@
 import { View, Text, Image, StyleSheet } from "react-native";
-import React, { useState, useEffect, TextInput } from "react";
-
-const getUserNickName = async () => {
-  const response = await fetch("http://13.124.69.147:8080/api/profile/1");
-  const data = await response.json();
-  return data.nickname;
-};
-
-const getUserDescribeSelf = async () => {
-  const response = await fetch("http://13.124.69.147:8080/api/profile/1");
-  const data = await response.json();
-  return data.describeSelf;
-};
+import React, { useState, useEffect } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = () => {
-  // 가져온 유저아이디를 랜더링.(공부필요)
-  const [nickname, setNickname] = useState("");
-
-  useEffect(() => {
-    const fetchNickname = async () => {
-      const name = await getUserNickName();
-      setNickname(name);
-    };
-    fetchNickname();
-  }, []);
-
   const [describeSelf, setDescribeSelf] = useState("");
+  const [profileImgPath, setProfileImgPath] = useState("https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"); // 기본 프로필 URL
 
   useEffect(() => {
-    const fetchDescribeSelf = async () => {
-      const desSelf = await getUserDescribeSelf();
-      setDescribeSelf(desSelf);
+    const fetchProfile = async () => {
+      try {
+        const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
+        const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
+
+        if (storedDescribeSelf) {
+          setDescribeSelf(storedDescribeSelf);
+        }
+        // URL이 비었는지 확인
+        if (storedProfileImgPath && storedProfileImgPath.trim() !== '') {
+          // 가능한 URL인지 확인
+          fetch(storedProfileImgPath, { method: 'HEAD' })
+            .then(response => {
+              if (response.ok) {
+                setProfileImgPath(storedProfileImgPath);
+              }
+            })
+            .catch(() => {
+              // URL이 없거나 불가능하면 기본 이미지
+              setProfileImgPath("https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png");
+            });
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
     };
-    fetchDescribeSelf();
+
+    fetchProfile();
   }, []);
 
   return (
-    <View>
-      <View style={styles.container}>
-        <Image
-          style={styles.img}
-          source={{
-            uri: "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzEwMTdfMTgy%2FMDAxNjk3NTMxNDg2MjYz.a0xugl5dJe8YoHNcJQe4DoHdGChRYOY9Edxp-F78g_cg.LIM-inmEX-z_5Mvb8pQmDTnkix8PPEerOtgKIUz3_2Mg.PNG.gustn5883%2F255275876_baby_cat%252C_cute_face.png&type=sc960_832",
-          }}
-        />
-        <Text style={styles.font}>{nickname}</Text>
-      </View>
+    <View style={styles.container}>
+      <Image
+        style={styles.img}
+        source={{ uri: profileImgPath }}
+      />
       <Text style={styles.describe}>{describeSelf}</Text>
     </View>
   );
@@ -53,24 +50,21 @@ const ProfileScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 28,
-    alignItems: "center",
-    marginLeft: 10,
+    flex: 1,
+    flexDirection: 'column', // 세로 방향 배치
+    alignItems: 'flex-start', // 왼쪽 정렬
+    marginLeft: 16, // 왼쪽 여백
+    marginTop: 16, // 위쪽 여백
   },
   img: {
     width: 80,
     height: 80,
     borderRadius: 40,
-  },
-
-  font: {
-    fontSize: 32,
-    marginLeft: 8,
+    marginBottom: 16, // 프로필 이미지와 설명 사이의 간격
   },
   describe: {
-    marginTop: 20,
-    fontSize: 32,
-    marginLeft: 8,
+    fontSize: 18,
+    color: 'black',
   },
 });
 

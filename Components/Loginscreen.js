@@ -7,11 +7,18 @@ import {
   StyleSheet,
   View,
   Text,
-  SafeAreaView,
   TouchableOpacity,
   TextInput,
   Alert,
 } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const getUserProfile = async (userId) => {
+  const response = await fetch(`http://13.124.69.147:8080/api/profile/${userId}`);
+  const data = await response.json();
+  console.log('Profile data:', data); //서버에서 받은 응답 데이터 로그 출력 (확인용임 지워도됨)
+  return data;
+};
 
 function Loginscreen({ navigation }) {
   const [account, setAccount] = useState("");
@@ -37,9 +44,31 @@ function Loginscreen({ navigation }) {
       }
 
       const data = await response.json();
+      console.log('User data:', data); // 서버에서 받은 응답 데이터 로그 출력(확인용임 지워도됨)
 
-      if (data.loginStatus === "로그인 성공") {
-        navigation.navigate("MainContainer");
+      if (data.message === "로그인 성공") {
+        const user = data.data;
+
+        if (user && user.userId) {
+          // 프로필 API 호출하여 닉네임 가져오기
+          const profile = await getUserProfile(user.userId);
+
+          // 기존 데이터 삭제 - 로그아웃하고 다른 계정 로그인할때 사용
+          await AsyncStorage.removeItem('user_id');
+          await AsyncStorage.removeItem('nickname');
+          await AsyncStorage.removeItem('profileImgPath');
+          await AsyncStorage.removeItem('describeSelf');
+
+          // 새로운 데이터 저장
+          await AsyncStorage.setItem('user_id', user.userId.toString()); // userId를 문자열로 저장
+          await AsyncStorage.setItem('nickname', profile.nickname || ''); // 닉네임 저장
+          await AsyncStorage.setItem('profileImgPath', profile.profileImgPath || ''); // 프로필 이미지 저장
+          await AsyncStorage.setItem('describeSelf', profile.describeSelf || ''); // 자기소개 저장
+
+          navigation.navigate("MainContainer");
+        } else {
+          Alert.alert("오류", "유저 정보를 저장할 수 없습니다.");
+        }
       } else {
         Alert.alert("로그인 실패", "아이디 또는 비밀번호가 틀렸습니다");
       }
@@ -117,7 +146,7 @@ function Loginscreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1, //전체의 공간을 차지한다는 의미
+    flex: 1,
     flexDirection: "column",
     backgroundColor: "white",
   },
