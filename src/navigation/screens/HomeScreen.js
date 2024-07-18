@@ -9,7 +9,10 @@ import {
   ActivityIndicator,
   Image,
   TouchableOpacity,
+  Modal,
+  Button,
 } from "react-native";
+import Icon from "react-native-vector-icons/FontAwesome";
 
 // page와 limit 사용해서 데이터 타임캡슐 데이터 가져옴.
 const GetCapsule = async (page, limit) => {
@@ -29,6 +32,8 @@ const GetProfileImgPath = async () => {
 // 유저아이디, 내용, 이미지 출력
 const Item = ({ writeUser, content, imageList, profileImgPath }) => {
   const [expanded, setExpanded] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // imageList 배열의 첫 번째 객체의 imagePath를 사용.
   const imageUrl =
@@ -61,6 +66,39 @@ const Item = ({ writeUser, content, imageList, profileImgPath }) => {
           </Text>
         </TouchableOpacity>
       )}
+      <View style={styles.actionsContainer}>
+        <TouchableOpacity onPress={() => setLiked(!liked)}>
+          <Icon
+            name="heart"
+            size={24}
+            color={liked ? "red" : "#BBBBBB"}
+            style={styles.actionIcon}
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Icon
+            name="comment"
+            size={24}
+            color="#BBBBBB"
+            style={styles.actionIcon}
+          />
+        </TouchableOpacity>
+      </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text>댓글</Text>
+            <Button title="닫기" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -69,10 +107,11 @@ const HomeScreen = () => {
   const [data, setData] = useState([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [hasMoreData, setHasMoreData] = useState(true);
 
   //로딩 표시 및 데이터 호출갯수 10개로 제한.
   const fetchData = async () => {
-    if (loading) return;
+    if (loading || !hasMoreData) return;
     setLoading(true);
     const capsuleResult = await GetCapsule(page, 10);
     const profileResult = await GetProfileImgPath();
@@ -91,6 +130,11 @@ const HomeScreen = () => {
     setData((prevData) => [...prevData, ...mergedData]);
     setPage((prevPage) => prevPage + 1);
     setLoading(false);
+
+    // 데이터가 limit보다 적게 오면 더 이상 데이터가 없다는 의미이므로 hasMoreData를 false로 설정
+    if (capsuleResult.length < 10) {
+      setHasMoreData(false);
+    }
   };
 
   useEffect(() => {
@@ -167,6 +211,29 @@ const styles = StyleSheet.create({
   readMore: {
     color: "#BBBBBB",
     marginTop: 4,
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  actionIcon: {
+    marginRight: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "100%",
+    height: "60%",
+    backgroundColor: "#f2f2f2",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    alignItems: "center",
   },
 });
 
