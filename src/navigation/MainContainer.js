@@ -154,6 +154,7 @@ const MainContainer = () => {
       initialRouteName={homeName}
       screenOptions={({ route }) => ({
         tabBarActiveTintColor: '#89a6fc',
+        tabBarInactiveTintColor: '#000000',
         tabBarShowLabel: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;

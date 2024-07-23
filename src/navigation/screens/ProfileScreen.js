@@ -1,23 +1,26 @@
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = () => {
+  const [name, setName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [describeSelf, setDescribeSelf] = useState("");
   const [profileImgPath, setProfileImgPath] = useState("https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"); // 기본 프로필 URL
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        const storedNickname = await AsyncStorage.getItem('nickname');
+        const storedName = await AsyncStorage.getItem('name');
         const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
         const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
 
-        if (storedDescribeSelf) {
-          setDescribeSelf(storedDescribeSelf);
-        }
-        // URL이 비었는지 확인
+        if (storedNickname) setNickname(storedNickname);
+        if (storedName) setName(storedName);
+        if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
+
         if (storedProfileImgPath && storedProfileImgPath.trim() !== '') {
-          // 가능한 URL인지 확인
           fetch(storedProfileImgPath, { method: 'HEAD' })
             .then(response => {
               if (response.ok) {
@@ -25,7 +28,6 @@ const ProfileScreen = () => {
               }
             })
             .catch(() => {
-              // URL이 없거나 불가능하면 기본 이미지
               setProfileImgPath("https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png");
             });
         }
@@ -39,11 +41,31 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Image
-        style={styles.img}
-        source={{ uri: profileImgPath }}
-      />
-      <Text style={styles.describe}>{describeSelf}</Text>
+      <View style={styles.profileHeader}>
+        <Image
+          style={styles.img}
+          source={{ uri: profileImgPath }}
+        />
+        <View style={styles.stats}>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>게시글</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>팔로워</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statLabel}>팔로잉</Text>
+          </View>
+        </View>
+      </View>
+      <Text style={styles.name}>{name}</Text>
+      <Text style={styles.describeSelf}>{describeSelf}</Text>
+      <View style={styles.posts}>
+        
+      </View>
     </View>
   );
 };
@@ -51,20 +73,68 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    flexDirection: 'column', // 세로 방향 배치
-    alignItems: 'flex-start', // 왼쪽 정렬
-    marginLeft: 16, // 왼쪽 여백
-    marginTop: 16, // 위쪽 여백
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  nickname: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   img: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    marginBottom: 16, // 프로필 이미지와 설명 사이의 간격
+    marginRight: 16,
   },
-  describe: {
+  stats: {
+    flexDirection: 'row',
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  stat: {
+    alignItems: 'center',
+  },
+  statNumber: {
     fontSize: 18,
-    color: 'black',
+    fontWeight: 'bold',
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#888',
+  },
+  editButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  editButtonText: {
+    fontSize: 14,
+    color: '#03C75A',
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  describeSelf: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  posts: {
+    flexDirection: 'row',
+  },
+  postImage: {
+    width: 150,
+    height: 150,
+    marginRight: 8,
   },
 });
 
