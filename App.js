@@ -19,6 +19,8 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import Loginscreen from "./Components/Loginscreen";
 import Registerscreen from "./Components/Registerscreen";
 import MainContainer from "./src/navigation/MainContainer";
+import ChangePwScreen from "./src/navigation/screens/ChangePwScreen";
+import ProfileOptionScreen from "./src/navigation/screens/PrifileOptionScreen";
 
 const Stack = createStackNavigator();
 
@@ -55,6 +57,27 @@ const App = () => {
             ),
             headerBackTitleVisible: false }}
         />
+        <Stack.Screen name="ProfileOptions" 
+          component={ProfileOptionScreen} 
+          options={{ 
+            title: '설정' }} />
+        <Stack.Screen name="ChangePassword" 
+          component={ChangePwScreen} 
+          options={{ 
+            title: '비밀번호 변경', 
+            headerTitleStyle: {
+              fontSize: 24,
+              fontWeight: 'bold',
+            },
+            headerBackImage: () => (
+              <Ionicons 
+                name="chevron-back-outline" 
+                size={24} 
+                color="black" 
+                style={{ paddingLeft: 10 }}
+              />
+            ),
+            headerBackTitleVisible: false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );
