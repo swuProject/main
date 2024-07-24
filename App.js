@@ -25,7 +25,7 @@ const Stack = createStackNavigator();
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      {/* <Stack.Navigator initialRouteName="Login">
         <Stack.Screen
           name="Login"
           component={Loginscreen}
@@ -55,7 +55,8 @@ const App = () => {
             ),
             headerBackTitleVisible: false }}
         />
-      </Stack.Navigator>
+      </Stack.Navigator> */}
+      <MainContainer />
     </NavigationContainer>
   );
 };
