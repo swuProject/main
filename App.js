@@ -25,7 +25,7 @@ const Stack = createStackNavigator();
 const App = () => {
   return (
     <NavigationContainer>
-      {/* <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator initialRouteName="Login">
         <Stack.Screen
           name="Login"
           component={Loginscreen}
@@ -39,24 +39,25 @@ const App = () => {
         <Stack.Screen
           name="Register"
           component={Registerscreen}
-          options={{ 
+          options={{
             title: "회원가입",
             headerTitleStyle: {
               fontSize: 24,
-              fontWeight: 'bold',
+              fontWeight: "bold",
             },
             headerBackImage: () => (
-              <Ionicons 
-                name="chevron-back-outline" 
-                size={24} 
-                color="black" 
+              <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
                 style={{ paddingLeft: 10 }}
               />
             ),
-            headerBackTitleVisible: false }}
+            headerBackTitleVisible: false,
+          }}
         />
-      </Stack.Navigator> */}
-      <MainContainer />
+      </Stack.Navigator>
+      {/* <MainContainer /> */}
     </NavigationContainer>
   );
 };
