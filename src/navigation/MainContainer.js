@@ -90,8 +90,7 @@ const HomeStackScreen = ({ navigation }) => {
           title: "",
           headerBackTitleVisible: false,
           headerLeft: () => (
-            <View style={styles.headerLeft}>
-              <Text style={styles.nickname}>{nickname}</Text>
+            <View>
             </View>
           ),
           headerRight: () => (
@@ -194,11 +193,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 10,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 10,
   },
   headerTitle: {
     fontSize: 32,

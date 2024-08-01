@@ -2,27 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 닉네임을 기준으로 사용자 프로필을 불러오는 함수
-const getUserProfileByNickname = async (nickname) => {
-  const response = await fetch(`http://13.124.69.147:8080/api/profiles/nicknames/${nickname}`);
-  if (!response.ok) {
-    const errorData = await response.text(); // 서버에서 반환된 에러 메시지를 받아옴
-    throw new Error(`프로필 정보를 불러올 수 없습니다. 서버 응답: ${errorData}`);
-  }
-  const data = await response.json();
-  return data;
-};
-
 // 프로필 정보를 서버에 저장하는 함수
-const saveUserProfile = async (nickname, describeSelf) => {
-  const response = await fetch(`http://13.124.69.147:8080/api/profiles/nicknames/${nickname}`, {
+const saveUserProfile = async (userId, nickname, describeSelf, profileImgPath) => {
+  const response = await fetch(`http://13.124.69.147:8080/api/profiles`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
+      userId,
       nickname,
       describeSelf,
+      profileImgPath,
     }),
   });
 
@@ -33,6 +24,7 @@ const saveUserProfile = async (nickname, describeSelf) => {
 };
 
 const ProfileFixScreen = ({ navigation }) => {
+  const [userId, setUserId] = useState(null);
   const [realName, setRealName] = useState("");
   const [nickname, setNickname] = useState("");
   const [describeSelf, setDescribeSelf] = useState("");
@@ -41,67 +33,51 @@ const ProfileFixScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
+        const storedUserId = await AsyncStorage.getItem('user_id');
+        const storedName = await AsyncStorage.getItem('name');
         const storedNickname = await AsyncStorage.getItem('nickname');
-        if (!storedNickname) {
-          Alert.alert('오류', '로그인 정보가 없습니다.');
-          return;
-        }
-
-        const storedRealName = await AsyncStorage.getItem('realName');
         const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
         const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
 
-        if (storedRealName) setRealName(storedRealName);
+        if (storedUserId) setUserId(storedUserId);
+        if (storedName) setRealName(storedName);
         if (storedNickname) setNickname(storedNickname);
         if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
         if (storedProfileImgPath) setProfileImgPath(storedProfileImgPath);
-
-        // 서버에서 최신 정보를 가져옴
-        const profileResponse = await getUserProfileByNickname(storedNickname);
-        const profile = profileResponse.data;
-        if (profile.realName) setRealName(profile.realName);
-        if (profile.nickname) setNickname(profile.nickname);
-        if (profile.describeSelf) setDescribeSelf(profile.describeSelf);
-        if (profile.profileImgPath && profile.profileImgPath.trim() !== '') {
-          fetch(profile.profileImgPath, { method: 'HEAD' })
-            .then(response => {
-              if (response.ok) {
-                setProfileImgPath(profile.profileImgPath);
-              }
-            })
-            .catch(() => {
-              setProfileImgPath("https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png");
-            });
-        }
       } catch (error) {
-        console.error('프로필 불러오기 오류:', error.message);
+        console.log(error);
       }
     };
+
     fetchProfile();
   }, []);
 
-  const handleSave = async () => {
+  const handleSaveProfile = async () => {
     try {
-      await saveUserProfile(nickname, describeSelf);
-      await AsyncStorage.setItem('realName', realName);
-      await AsyncStorage.setItem('nickname', nickname);
-      await AsyncStorage.setItem('describeSelf', describeSelf);
-      await AsyncStorage.setItem('profileImgPath', profileImgPath);
-      Alert.alert('성공', '프로필이 저장되었습니다.');
+      if (userId) {
+        await saveUserProfile(userId, nickname, describeSelf, profileImgPath);
+        await AsyncStorage.setItem('nickname', nickname);
+        await AsyncStorage.setItem('describeSelf', describeSelf);
+        await AsyncStorage.setItem('profileImgPath', profileImgPath);
+        Alert.alert("성공", "프로필이 저장되었습니다.");
+        navigation.goBack(); // 프로필 화면으로 이동
+      } else {
+        Alert.alert("오류", "유저 ID를 찾을 수 없습니다.");
+      }
     } catch (error) {
-      Alert.alert('오류', error.message);
+      Alert.alert("오류", error.message);
     }
   };
 
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={handleSave}>
+        <TouchableOpacity onPress={handleSaveProfile}>
           <Text style={styles.headerButtonText}>완료</Text>
         </TouchableOpacity>
       ),
     });
-  }, [navigation, handleSave]);
+  }, [navigation, handleSaveProfile]);
 
   return (
     <View style={styles.container}>

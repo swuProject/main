@@ -68,18 +68,9 @@ function Loginscreen({ navigation }) {
           await AsyncStorage.setItem("user_id", user.userId.toString()); // userId를 문자열로 저장
           await AsyncStorage.setItem("name", user.name || "");
           await AsyncStorage.setItem("nickname", profile.nickname || ""); // 닉네임 저장
-          await AsyncStorage.setItem(
-            "profileImgPath",
-            profile.profileImgPath || ""
-          ); // 프로필 이미지 저장
-          await AsyncStorage.setItem(
-            "describeSelf",
-            profile.describeSelf || ""
-          ); // 자기소개 저장
-          await AsyncStorage.setItem(
-            "profileId",
-            profile.profileId.toString() || ""
-          );
+          await AsyncStorage.setItem("profileImgPath", profile.profileImgPath || ""); // 프로필 이미지 저장
+          await AsyncStorage.setItem("describeSelf", profile.describeSelf || ""); // 자기소개 저장
+          await AsyncStorage.setItem("profileId", profile.profileId.toString() || "");
 
           navigation.navigate("MainContainer");
         } else {
