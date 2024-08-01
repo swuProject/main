@@ -21,6 +21,8 @@ import Registerscreen from "./Components/Registerscreen";
 import MainContainer from "./src/navigation/MainContainer";
 import ChangePwScreen from "./src/navigation/screens/ChangePwScreen";
 import ProfileOptionScreen from "./src/navigation/screens/PrifileOptionScreen";
+import ProfileScreen from "./src/navigation/screens/ProfileScreen";
+import ProfileFixScreen from "./src/navigation/screens/PrifileFixScreen";
 
 const Stack = createStackNavigator();
 
@@ -78,6 +80,8 @@ const App = () => {
               />
             ),
             headerBackTitleVisible: false}} />
+            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+            <Stack.Screen name="ProfileFixScreen" component={ProfileFixScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
