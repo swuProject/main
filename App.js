@@ -43,39 +43,44 @@ const App = () => {
         <Stack.Screen
           name="Register"
           component={Registerscreen}
-          options={{ 
+          options={{
             title: "회원가입",
             headerTitleStyle: {
               fontSize: 24,
-              fontWeight: 'bold',
+              fontWeight: "bold",
             },
             headerBackImage: () => (
-              <Ionicons 
-                name="chevron-back-outline" 
-                size={24} 
-                color="black" 
+              <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
                 style={{ paddingLeft: 10 }}
               />
             ),
-            headerBackTitleVisible: false }}
+            headerBackTitleVisible: false,
+          }}
         />
-        <Stack.Screen name="ProfileOptions" 
-          component={ProfileOptionScreen} 
-          options={{ 
-            title: '설정' }} />
-        <Stack.Screen name="ChangePassword" 
-          component={ChangePwScreen} 
-          options={{ 
-            title: '비밀번호 변경', 
+        <Stack.Screen
+          name="ProfileOptions"
+          component={ProfileOptionScreen}
+          options={{
+            title: "설정",
+          }}
+        />
+        <Stack.Screen
+          name="ChangePassword"
+          component={ChangePwScreen}
+          options={{
+            title: "비밀번호 변경",
             headerTitleStyle: {
               fontSize: 24,
-              fontWeight: 'bold',
+              fontWeight: "bold",
             },
             headerBackImage: () => (
-              <Ionicons 
-                name="chevron-back-outline" 
-                size={24} 
-                color="black" 
+              <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
                 style={{ paddingLeft: 10 }}
               />
             ),

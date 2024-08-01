@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   Modal,
   Button,
+  TextInput,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -53,6 +54,18 @@ const GetVisitCount = async (capsuleId) => {
   }
 };
 
+const GetCommentCount = async (capsuleId) => {
+  try {
+    const response = await fetch(
+      `http://13.124.69.147:8080/api/capsules/${capsuleId}/comments`
+    );
+    const result = await response.json();
+    return result.data.length;
+  } catch (error) {
+    return 0;
+  }
+};
+
 const GetLikeCount = async (capsuleId) => {
   try {
     const response = await fetch(
@@ -66,7 +79,7 @@ const GetLikeCount = async (capsuleId) => {
 };
 
 // 좋아요 저장
-const SaveLike = async (userId, timeCapsuleId) => {
+const SaveLike = async (profileId, timeCapsuleId) => {
   try {
     const response = await fetch(
       "http://13.124.69.147:8080/api/capsules/likes",
@@ -75,7 +88,7 @@ const SaveLike = async (userId, timeCapsuleId) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ userId, timeCapsuleId }),
+        body: JSON.stringify({ profileId, timeCapsuleId }),
       }
     );
     const data = await response.json();
@@ -87,13 +100,110 @@ const SaveLike = async (userId, timeCapsuleId) => {
   }
 };
 
-// 유저아이디, 내용, 이미지 출력
-const Item = ({ capsuleId, writeUser, content, imageList, profileImgPath }) => {
+// 해당하는 capsuleId 댓글을 가져옴.
+const GetComments = async (capsuleId) => {
+  try {
+    const response = await fetch(
+      `http://13.124.69.147:8080/api/capsules/${capsuleId}/comments`
+    );
+    const result = await response.json();
+    console.log("Fetched comments:", result.data); // 디버깅용 로그
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    return [];
+  }
+};
+
+// 새로운 댓글을 서버에 저장하는 함수
+const SaveComment = async (
+  profileId,
+  capsuleId,
+  comment,
+  refCommentId = null
+) => {
+  try {
+    const response = await fetch(
+      `http://13.124.69.147:8080/api/capsules/comments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          profileId,
+          comment,
+          timeCapsuleId: capsuleId,
+          refCommentId,
+        }),
+      }
+    );
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error("Error saving comment:", error);
+    return null;
+  }
+};
+
+// 해당 프로필 아이디의 좋아요 데이터를 가져옴.
+const GetLikedCapsules = async (profileId) => {
+  try {
+    const response = await fetch(
+      `http://13.124.69.147:8080/api/profiles/${profileId}/likes`
+    );
+    const result = await response.json();
+
+    if (result && result.data && Array.isArray(result.data)) {
+      return result.data.map((like) => like.timeCapsuleId);
+    } else {
+      console.error("Unexpected response structure:", result);
+      return [];
+    }
+  } catch (error) {
+    console.error("Error fetching liked capsules:", error);
+    return [];
+  }
+};
+
+//댓글 Item
+const CommentItem = ({ comment, nickname, profileImgPath }) => {
+  console.log("CommentItem Props:", { comment, nickname, profileImgPath }); // 디버깅용 로그
+  return (
+    <View style={styles.commentItem}>
+      {profileImgPath ? (
+        <Image
+          style={styles.commentProfileImage}
+          source={{ uri: profileImgPath }}
+        />
+      ) : (
+        <Text style={styles.noProfileImage}>프로필 이미지 없음</Text>
+      )}
+      <View style={styles.commentTextContainer}>
+        <Text style={styles.commentNickname}>{nickname}</Text>
+        <Text style={styles.commentText}>{comment}</Text>
+      </View>
+    </View>
+  );
+};
+
+// Item 컴포넌트
+const Item = ({
+  capsuleId,
+  writeUser,
+  content,
+  imageList,
+  profileImgPath,
+  initialLiked,
+}) => {
   const [expanded, setExpanded] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(initialLiked); // 좋아요 상태 초기화
   const [modalVisible, setModalVisible] = useState(false);
   const [visitCount, setVisitCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
+  const [comments, setComments] = useState([]);
+  const [commentCount, setCommentCount] = useState(0);
+  const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
     const fetchVisitCount = async () => {
@@ -106,13 +216,19 @@ const Item = ({ capsuleId, writeUser, content, imageList, profileImgPath }) => {
       setLikeCount(count);
     };
 
+    const fetchCommentCount = async () => {
+      const count = await GetCommentCount(capsuleId);
+      setCommentCount(count);
+    };
+
+    fetchCommentCount();
     fetchVisitCount();
     fetchLikeCount();
   }, [capsuleId]);
 
-  //
   const handleLike = async () => {
-    const userId = await AsyncStorage.getItem("userId");
+    const userId = await AsyncStorage.getItem("profileId");
+    const timeCapsuleId = capsuleId;
     if (userId) {
       await SaveLike(userId, capsuleId);
       setLiked(!liked);
@@ -121,7 +237,27 @@ const Item = ({ capsuleId, writeUser, content, imageList, profileImgPath }) => {
     }
   };
 
-  // imageList 배열의 첫 번째 객체의 imagePath를 사용.
+  const handleOpenModal = async () => {
+    const fetchedComments = await GetComments(capsuleId);
+    setComments(fetchedComments);
+    setModalVisible(true);
+  };
+
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
+
+  const handleSaveComment = async () => {
+    const profileId = await AsyncStorage.getItem("profileId");
+    if (profileId && newComment) {
+      await SaveComment(profileId, capsuleId, newComment);
+      const updatedComments = await GetComments(capsuleId);
+      setComments(updatedComments);
+      setCommentCount(updatedComments.length);
+      setNewComment("");
+    }
+  };
+
   const imageUrl =
     imageList && imageList.length > 0 ? imageList[0].imagePath : null;
 
@@ -162,13 +298,18 @@ const Item = ({ capsuleId, writeUser, content, imageList, profileImgPath }) => {
           />
           <Text style={styles.likeCount}>{likeCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <TouchableOpacity
+          onPress={handleOpenModal}
+          style={styles.likeContainer}
+        >
           <Icon
             name="comment"
             size={24}
             color="#BBBBBB"
             style={styles.actionIcon}
           />
+          {/* css해야함 */}
+          <Text style={styles.likeCount}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
       <Text style={styles.visitCount}>조회수: {visitCount}</Text>
@@ -176,14 +317,30 @@ const Item = ({ capsuleId, writeUser, content, imageList, profileImgPath }) => {
         animationType="slide"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
+        onRequestClose={handleCloseModal}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text>댓글</Text>
-            <Button title="닫기" onPress={() => setModalVisible(false)} />
+            <FlatList
+              data={comments}
+              renderItem={({ item }) => (
+                <CommentItem
+                  comment={item.comment}
+                  nickname={item.nickname}
+                  profileImgPath={profileImgPath} // 여기에 올바른 프로필 이미지 경로를 추가
+                />
+              )}
+              keyExtractor={(item) => item.commentId.toString()}
+            />
+            <TextInput
+              style={styles.commentInput}
+              value={newComment}
+              onChangeText={setNewComment}
+              placeholder="댓글을 입력하세요"
+            />
+            <Button title="댓글 저장" onPress={handleSaveComment} />
+            <Button title="닫기" onPress={handleCloseModal} />
           </View>
         </View>
       </Modal>
@@ -196,8 +353,8 @@ const HomeScreen = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
+  const [likedCapsules, setLikedCapsules] = useState([]); // 좋아요 데이터 상태 추가
 
-  //로딩 표시 및 데이터 호출갯수 10개로 제한.
   const fetchData = async () => {
     if (loading || !hasMoreData) return;
     setLoading(true);
@@ -205,7 +362,6 @@ const HomeScreen = () => {
       const capsuleResult = await GetCapsule(page, 10);
       const profileResult = await GetProfileImgPath();
 
-      // 데이터 병합 writeUser와 nickname이 일치하는 경우 profileImgPath를 가져와서 병합된 데이터에 추가
       const mergedData = capsuleResult.map((capsule) => {
         const profile = profileResult.find(
           (profile) => profile.nickname === capsule.writeUser
@@ -213,6 +369,7 @@ const HomeScreen = () => {
         return {
           ...capsule,
           profileImgPath: profile ? profile.profileImgPath : null,
+          initialLiked: likedCapsules.includes(capsule.capsuleId),
         };
       });
 
@@ -220,7 +377,6 @@ const HomeScreen = () => {
       setPage((prevPage) => prevPage + 1);
       setLoading(false);
 
-      // 데이터가 limit보다 적게 오면 더 이상 데이터가 없다는 의미이므로 hasMoreData를 false로 설정
       if (capsuleResult.length < 10) {
         setHasMoreData(false);
       }
@@ -231,36 +387,46 @@ const HomeScreen = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    const fetchInitialData = async () => {
+      try {
+        const profileId = await AsyncStorage.getItem("profileId");
+        if (profileId) {
+          const likedCapsules = await GetLikedCapsules(profileId);
+          setLikedCapsules(likedCapsules);
+
+          // Fetch capsules only after liked capsules are set
+          await fetchData();
+        }
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
+
+    fetchInitialData();
   }, []);
 
-  // 스크롤이 끝에 도달했을 때 추가 데이터를 로드.
-  const handleLoadMore = () => {
-    fetchData();
-  };
-
-  const renderFooter = () => {
-    if (!loading) return null;
-    return <ActivityIndicator size="large" color="#0000ff" />;
-  };
+  const renderItem = ({ item }) => (
+    <Item
+      capsuleId={item.capsuleId}
+      writeUser={item.writeUser}
+      content={item.content}
+      imageList={item.imageList}
+      profileImgPath={item.profileImgPath}
+      initialLiked={item.initialLiked}
+    />
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
         data={data}
-        renderItem={({ item }) => (
-          <Item
-            capsuleId={item.capsuleId}
-            content={item.content}
-            writeUser={item.writeUser}
-            imageList={item.imageList}
-            profileImgPath={item.profileImgPath}
-          />
-        )}
+        renderItem={renderItem}
         keyExtractor={(item) => item.capsuleId.toString()}
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.75}
-        ListFooterComponent={renderFooter}
+        onEndReached={fetchData}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          loading && <ActivityIndicator size="large" color="#0000ff" />
+        }
       />
     </SafeAreaView>
   );
@@ -270,77 +436,108 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginTop: StatusBar.currentHeight || 0,
-    backgroundColor: "white",
   },
   item: {
     backgroundColor: "white",
-    padding: 10,
+    padding: 20,
     marginVertical: 8,
-    marginHorizontal: 0,
-  },
-  title: {
-    fontSize: 24,
-  },
-  content: {
-    fontSize: 16,
-    marginVertical: 8,
-  },
-  image: {
-    flex: 1,
-    width: "100%",
-    height: 200,
-    marginTop: 8,
+    marginHorizontal: 16,
+    borderRadius: 10,
   },
   userContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 10,
   },
-  profileImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 25,
-    marginTop: 8,
-    marginRight: 12,
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  image: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  content: {
+    fontSize: 16,
+    marginTop: 10,
   },
   readMore: {
-    color: "#BBBBBB",
-    marginTop: 4,
+    color: "blue",
+    marginTop: 5,
+  },
+  profileImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
   },
   actionsContainer: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    marginTop: 8,
+    marginTop: 10,
   },
   actionIcon: {
-    marginRight: 16,
+    marginRight: 5,
+  },
+  likeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
   },
   likeCount: {
-    fontSize: 14,
-    color: "#888888",
-    marginTop: 4,
+    marginLeft: 5,
   },
   visitCount: {
-    marginTop: 8,
+    marginTop: 10,
     fontSize: 14,
-    color: "#888888",
+    color: "#888",
   },
   modalContainer: {
     flex: 1,
-    justifyContent: "flex-end",
+    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: "100%",
-    height: "60%",
-    backgroundColor: "#f2f2f2",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: "white",
     padding: 20,
-    alignItems: "center",
+    borderRadius: 10,
+    width: "80%",
+    height: "50%",
   },
-  likeContainer: {
-    alignItems: "center", // 아이콘과 숫자를 가운데 정렬
+  commentItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+  },
+  commentProfileImage: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    marginRight: 10,
+  },
+  commentTextContainer: {
+    flex: 1,
+  },
+  commentNickname: {
+    fontWeight: "bold",
+  },
+  commentText: {
+    color: "#555",
+  },
+  noProfileImage: {
+    color: "#999",
+  },
+  commentInput: {
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    marginTop: 10,
+    marginBottom: 10,
+    paddingLeft: 8,
   },
 });
 
