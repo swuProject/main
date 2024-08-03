@@ -160,15 +160,15 @@ const MainContainer = () => {
           let rn = route.name;
 
           if (rn === homeName) {
-            iconName = focused ? "home" : "home-outline";
+            iconName = focused ? "home-outline" : "home-outline";
           } else if (rn === mapName) {
-            iconName = focused ? "map" : "location-outline";
+            iconName = focused ? "location-outline" : "location-outline";
           } else if (rn === cameraName) {
-            iconName = focused ? "camera" : "camera-outline";
+            iconName = focused ? "camera-outline" : "camera-outline";
           } else if (rn === alarmName) {
-            iconName = focused ? "alarm" : "notifications-outline";
+            iconName = focused ? "notifications-outline" : "notifications-outline";
           } else if (rn === chatName) {
-            iconName = focused ? "chatbox" : "chatbox-ellipses-outline";
+            iconName = focused ? "chatbox-ellipses-outline" : "chatbox-ellipses-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
