@@ -146,26 +146,6 @@ const SaveComment = async (
   }
 };
 
-// 해당 프로필 아이디의 좋아요 데이터를 가져옴.
-const GetLikedCapsules = async (profileId) => {
-  try {
-    const response = await fetch(
-      `http://13.124.69.147:8080/api/profiles/${profileId}/likes`
-    );
-    const result = await response.json();
-
-    if (result && result.data && Array.isArray(result.data)) {
-      return result.data.map((like) => like.timeCapsuleId);
-    } else {
-      console.error("Unexpected response structure:", result);
-      return [];
-    }
-  } catch (error) {
-    console.error("Error fetching liked capsules:", error);
-    return [];
-  }
-};
-
 //댓글 Item
 const CommentItem = ({ comment, nickname, profileImgPath }) => {
   console.log("CommentItem Props:", { comment, nickname, profileImgPath }); // 디버깅용 로그
@@ -386,14 +366,12 @@ const HomeScreen = () => {
     }
   };
 
+  // 상태
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
         const profileId = await AsyncStorage.getItem("profileId");
         if (profileId) {
-          const likedCapsules = await GetLikedCapsules(profileId);
-          setLikedCapsules(likedCapsules);
-
           // Fetch capsules only after liked capsules are set
           await fetchData();
         }
