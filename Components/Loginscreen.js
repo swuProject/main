@@ -10,24 +10,46 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
+  Linking,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { login as kakaoLogin, getProfile as getKakaoProfile } from "@react-native-seoul/kakao-login";
 
+// 서버에서 사용자 프로필 가져오기
 const getUserProfile = async (userId) => {
-  const response = await fetch(
-    `http://13.124.69.147:8080/api/users/${userId}/profiles`
-  );
-  const data = await response.json();
-  console.log("Profile data:", data); // 서버에서 받은 응답 데이터 로그 출력 (확인용임 지워도됨)
-  return data;
+  try {
+    const response = await fetch(
+      `http://13.124.69.147:8080/api/users/${userId}/profiles`
+    );
+    if (!response.ok) {
+      throw new Error('Network response was not ok.');
+    }
+    const data = await response.json();
+    console.log("Profile data:", data);
+    return data;
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    throw error;
+  }
 };
 
 function Loginscreen({ navigation }) {
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [kakaoLoading, setKakaoLoading] = useState(false);
 
+  // 일반 로그인 처리
   const handleLogin = async () => {
-    const apiURL = "http://13.124.69.147:8080/api/login"; // 서버의 로그인 API URL
+    const apiURL = "http://13.124.69.147:8080/api/login";
+
+    if (!account || !password) {
+      Alert.alert("입력 오류", "이메일과 비밀번호를 입력해 주세요.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
       const response = await fetch(apiURL, {
@@ -40,47 +62,72 @@ function Loginscreen({ navigation }) {
           password,
         }),
       });
+      
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("서버 오류");
+        Alert.alert(data.message);
       }
 
-      const data = await response.json();
-      console.log("User data:", data); // 서버에서 받은 응답 데이터 로그 출력(확인용임 지워도됨)
+      console.log("User data:", data);
 
-      if (data.message === "로그인 성공") {
+      if (data.status === "OK") {
         const user = data.data;
 
         if (user && user.userId) {
-          // 프로필 API 호출하여 닉네임 가져오기
           const profileResponse = await getUserProfile(user.userId);
           const profile = profileResponse.data;
 
-          // 기존 데이터 삭제 - 로그아웃하고 다른 계정 로그인할때 사용
-          await AsyncStorage.removeItem("user_id");
-          await AsyncStorage.removeItem("name");
-          await AsyncStorage.removeItem("nickname");
-          await AsyncStorage.removeItem("profileImgPath");
-          await AsyncStorage.removeItem("describeSelf");
-          await AsyncStorage.removeItem("profileId");
-
-          // 새로운 데이터 저장
-          await AsyncStorage.setItem("user_id", user.userId.toString()); // userId를 문자열로 저장
+          await AsyncStorage.clear();
+          await AsyncStorage.setItem("user_id", user.userId.toString());
           await AsyncStorage.setItem("name", user.name || "");
-          await AsyncStorage.setItem("nickname", profile.nickname || ""); // 닉네임 저장
-          await AsyncStorage.setItem("profileImgPath", profile.profileImgPath || ""); // 프로필 이미지 저장
-          await AsyncStorage.setItem("describeSelf", profile.describeSelf || ""); // 자기소개 저장
+          await AsyncStorage.setItem("nickname", profile.nickname || "");
+          await AsyncStorage.setItem("profileImgPath", profile.profileImgPath || "");
+          await AsyncStorage.setItem("describeSelf", profile.describeSelf || "");
           await AsyncStorage.setItem("profileId", profile.profileId.toString() || "");
 
           navigation.navigate("MainContainer");
         } else {
           Alert.alert("오류", "유저 정보를 저장할 수 없습니다.");
         }
-      } else {
-        Alert.alert("로그인 실패", "아이디 또는 비밀번호가 틀렸습니다");
       }
     } catch (error) {
       Alert.alert("오류", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Kakao 로그인 처리
+  const handleKakaoLogin = async () => {
+    setKakaoLoading(true);
+
+    try {
+      // 카카오 로그인 요청
+      const result = await kakaoLogin();
+      if (result) {
+        console.log("Kakao token:", result);
+
+        // 카카오 프로필 정보 요청
+        const profile = await getKakaoProfile();
+        console.log("Kakao profile:", profile);
+
+        // 프로필 정보를 AsyncStorage에 저장
+        await AsyncStorage.setItem("kakao_id", profile.id.toString());
+        await AsyncStorage.setItem("nickname", profile.nickname || "");
+        await AsyncStorage.setItem("profileImgPath", profile.profileImageUrl || "");
+        await AsyncStorage.setItem("thumbnailImageUrl", profile.thumbnailImageUrl || "");
+
+        // MainContainer로 이동
+        navigation.navigate("MainContainer");
+      } else {
+        throw new Error("Kakao login failed.");
+      }
+    } catch (err) {
+      console.error("Kakao 로그인 에러:", err);
+      Alert.alert("로그인 실패", "Kakao 로그인에 실패했습니다.");
+    } finally {
+      setKakaoLoading(false);
     }
   };
 
@@ -98,6 +145,7 @@ function Loginscreen({ navigation }) {
             value={account}
             onChangeText={setAccount}
             autoCapitalize="none"
+            
           />
           <TextInput
             placeholder="Password"
@@ -109,10 +157,18 @@ function Loginscreen({ navigation }) {
           />
         </View>
         <View style={styles.btnArea}>
-          <TouchableOpacity style={styles.btnBlue} onPress={handleLogin}>
-            <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
-              로그인
-            </Text>
+          <TouchableOpacity
+            style={styles.btnBlue}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
+                로그인
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
         <View style={styles.registerArea}>
@@ -134,10 +190,18 @@ function Loginscreen({ navigation }) {
           </TouchableOpacity>
         </View>
         <View style={styles.btnArea}>
-          <TouchableOpacity style={styles.btnKakao}>
-            <Text style={{ color: "black", fontWeight: "bold", fontSize: 15 }}>
-              카카오로 시작하기
-            </Text>
+          <TouchableOpacity
+            style={styles.btnKakao}
+            onPress={handleKakaoLogin}
+            disabled={kakaoLoading}
+          >
+            {kakaoLoading ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <Text style={{ color: "black", fontWeight: "bold", fontSize: 15 }}>
+                카카오로 시작하기
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
         <View style={styles.btnArea}>
@@ -216,11 +280,11 @@ const styles = StyleSheet.create({
     height: hp(6),
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 0.5,
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
     borderRadius: 8,
-    borderColor: 30,
-    marginBottom: hp(1),
-    paddingHorizontal: wp(3),
+    paddingHorizontal: 16,
+    marginBottom: 10,
   },
 });
 
