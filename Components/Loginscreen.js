@@ -114,9 +114,9 @@ function Loginscreen({ navigation }) {
 
         // 프로필 정보를 AsyncStorage에 저장
         await AsyncStorage.setItem("kakao_id", profile.id.toString());
+        await AsyncStorage.setItem("name", profile.name || "");
         await AsyncStorage.setItem("nickname", profile.nickname || "");
         await AsyncStorage.setItem("profileImgPath", profile.profileImageUrl || "");
-        await AsyncStorage.setItem("thumbnailImageUrl", profile.thumbnailImageUrl || "");
 
         // MainContainer로 이동
         navigation.navigate("MainContainer");
