@@ -20,9 +20,9 @@ import Loginscreen from "./Components/Loginscreen";
 import Registerscreen from "./Components/Registerscreen";
 import MainContainer from "./src/navigation/MainContainer";
 import ChangePwScreen from "./src/navigation/screens/ChangePwScreen";
-import ProfileOptionScreen from "./src/navigation/screens/PrifileOptionScreen";
-import ProfileScreen from "./src/navigation/screens/ProfileScreen";
-import ProfileFixScreen from "./src/navigation/screens/PrifileFixScreen";
+import ProfileOptionScreen from "./src/navigation/screens/ProfileScreen/PrifileOptionScreen";
+import ProfileScreen from "./src/navigation/screens/ProfileScreen/ProfileScreen";
+import ProfileFixScreen from "./src/navigation/screens/ProfileScreen/PrifileFixScreen";
 
 const Stack = createStackNavigator();
 
@@ -84,9 +84,11 @@ const App = () => {
                 style={{ paddingLeft: 10 }}
               />
             ),
-            headerBackTitleVisible: false}} />
-            <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-            <Stack.Screen name="ProfileFixScreen" component={ProfileFixScreen} />
+            headerBackTitleVisible: false,
+          }}
+        />
+        <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+        <Stack.Screen name="ProfileFixScreen" component={ProfileFixScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

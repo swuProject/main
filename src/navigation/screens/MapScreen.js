@@ -10,7 +10,7 @@ import {
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 
-export default function App() {
+export default function MapScreen() {
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState("");
   const [errorMsg, setErrorMsg] = useState(null);

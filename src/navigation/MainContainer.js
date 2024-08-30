@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // font
 import { FontAwesome } from "@expo/vector-icons";
@@ -13,12 +13,12 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 // Screens
 import HomeScreen from "./screens/HomeScreen";
 import MapScreen from "./screens/MapScreen";
-import CameraScreen from "./screens/CameraScreen";
+import CameraScreen from "./screens/CameraScreen/CameraScreen";
 import AlarmScreen from "./screens/AlarmScreen";
 import ChatScreen from "./screens/ChatScreen";
-import ProfileScreen from "./screens/ProfileScreen";
-import ProfileOptionScreen from "./screens/PrifileOptionScreen";
-import ProfileFixScreen from "./screens/PrifileFixScreen";
+import ProfileScreen from "./screens/ProfileScreen/ProfileScreen";
+import ProfileOptionScreen from "./screens/ProfileScreen/PrifileOptionScreen";
+import ProfileFixScreen from "./screens/ProfileScreen/PrifileFixScreen";
 
 // Screen names
 const homeName = "home";
@@ -42,12 +42,12 @@ const HomeStackScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchNickname = async () => {
       try {
-        const storedNickname = await AsyncStorage.getItem('nickname');
+        const storedNickname = await AsyncStorage.getItem("nickname");
         if (storedNickname) {
           setNickname(storedNickname);
         }
       } catch (error) {
-        console.error('닉네임 불러오기 오류:', error);
+        console.error("닉네임 불러오기 오류:", error);
       }
     };
     fetchNickname();
@@ -73,12 +73,13 @@ const HomeStackScreen = ({ navigation }) => {
         options={{
           title: "", // 홈화면 헤더
           headerBackTitleVisible: false,
-          headerLeft: () => (
-            <Text style={styles.headerTitle}>TuiTui</Text>
-          ),
+          headerLeft: () => <Text style={styles.headerTitle}>TuiTui</Text>,
           headerRight: () => (
-            <TouchableOpacity onPress={goToProfile} style={styles.headerIconButton}>
-              <FontAwesome name="user-o" size={24} color="black"/>
+            <TouchableOpacity
+              onPress={goToProfile}
+              style={styles.headerIconButton}
+            >
+              <FontAwesome name="user-o" size={24} color="black" />
             </TouchableOpacity> // 프로필 화면으로 이동 버튼
           ),
         }}
@@ -89,16 +90,19 @@ const HomeStackScreen = ({ navigation }) => {
         options={{
           title: "",
           headerBackTitleVisible: false,
-          headerLeft: () => (
-            <View>
-            </View>
-          ),
+          headerLeft: () => <View></View>,
           headerRight: () => (
             <View style={styles.profileContainer}>
-              <TouchableOpacity onPress={goToProfileFix} style={styles.iconButton}>
+              <TouchableOpacity
+                onPress={goToProfileFix}
+                style={styles.iconButton}
+              >
                 <MaterialCommunityIcons name="pencil" size={24} color="black" />
               </TouchableOpacity>
-              <TouchableOpacity onPress={goToProfileOption} style={styles.iconButton}>
+              <TouchableOpacity
+                onPress={goToProfileOption}
+                style={styles.iconButton}
+              >
                 <Feather name="settings" size={24} color="black" />
               </TouchableOpacity>
             </View>
@@ -108,40 +112,42 @@ const HomeStackScreen = ({ navigation }) => {
       <HomeStack.Screen
         name="ProfileFix"
         component={ProfileFixScreen}
-        options={{ 
+        options={{
           title: "프로필 수정",
           headerTitleStyle: {
             fontSize: 24,
-            fontWeight: 'bold',
+            fontWeight: "bold",
           },
           headerBackImage: () => (
-            <Ionicons 
-              name="chevron-back-outline" 
-              size={24} 
-              color="black" 
+            <Ionicons
+              name="chevron-back-outline"
+              size={24}
+              color="black"
               style={{ paddingLeft: 10 }}
             />
           ),
-          headerBackTitleVisible: false }}
+          headerBackTitleVisible: false,
+        }}
       />
       <HomeStack.Screen
         name="ProfileOption"
         component={ProfileOptionScreen}
-        options={{ 
+        options={{
           title: "설정",
           headerTitleStyle: {
             fontSize: 24,
-            fontWeight: 'bold',
+            fontWeight: "bold",
           },
           headerBackImage: () => (
-            <Ionicons 
-              name="chevron-back-outline" 
-              size={24} 
-              color="black" 
+            <Ionicons
+              name="chevron-back-outline"
+              size={24}
+              color="black"
               style={{ paddingLeft: 10 }}
             />
           ),
-          headerBackTitleVisible: false }}
+          headerBackTitleVisible: false,
+        }}
       />
     </HomeStack.Navigator>
   );
@@ -152,8 +158,8 @@ const MainContainer = () => {
     <Tab.Navigator
       initialRouteName={homeName}
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: '#89a6fc',
-        tabBarInactiveTintColor: '#000000',
+        tabBarActiveTintColor: "#89a6fc",
+        tabBarInactiveTintColor: "#000000",
         tabBarShowLabel: false,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -166,9 +172,13 @@ const MainContainer = () => {
           } else if (rn === cameraName) {
             iconName = focused ? "camera-outline" : "camera-outline";
           } else if (rn === alarmName) {
-            iconName = focused ? "notifications-outline" : "notifications-outline";
+            iconName = focused
+              ? "notifications-outline"
+              : "notifications-outline";
           } else if (rn === chatName) {
-            iconName = focused ? "chatbox-ellipses-outline" : "chatbox-ellipses-outline";
+            iconName = focused
+              ? "chatbox-ellipses-outline"
+              : "chatbox-ellipses-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -190,8 +200,8 @@ const MainContainer = () => {
 
 const styles = StyleSheet.create({
   profileContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginRight: 10,
   },
   headerTitle: {
@@ -201,8 +211,8 @@ const styles = StyleSheet.create({
   },
   nickname: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
+    fontWeight: "bold",
+    color: "black",
   },
   iconButton: {
     marginLeft: 15,
