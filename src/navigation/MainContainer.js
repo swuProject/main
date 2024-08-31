@@ -14,11 +14,14 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import HomeScreen from "./screens/HomeScreen";
 import MapScreen from "./screens/MapScreen";
 import CameraScreen from "./screens/CameraScreen/CameraScreen";
+import CameraActive from "./screens/CameraScreen/CameraActive";
 import AlarmScreen from "./screens/AlarmScreen";
 import ChatScreen from "./screens/ChatScreen";
 import ProfileScreen from "./screens/ProfileScreen/ProfileScreen";
 import ProfileOptionScreen from "./screens/ProfileScreen/PrifileOptionScreen";
 import ProfileFixScreen from "./screens/ProfileScreen/PrifileFixScreen";
+
+import CameraStackScreen from "./screens/CameraScreen/CameraScreen";
 
 // Screen names
 const homeName = "home";
@@ -191,7 +194,7 @@ const MainContainer = () => {
         options={{ headerShown: false }}
       />
       <Tab.Screen name={mapName} component={MapScreen} />
-      <Tab.Screen name={cameraName} component={CameraScreen} />
+      <Tab.Screen name={cameraName} component={CameraStackScreen} />
       <Tab.Screen name={alarmName} component={AlarmScreen} />
       <Tab.Screen name={chatName} component={ChatScreen} />
     </Tab.Navigator>

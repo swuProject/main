@@ -3,7 +3,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // Icon 사용을 위한 import
 
-export default function CameraActive() {
+export default function CameraActive({ navigation }) {
   const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -27,12 +27,20 @@ export default function CameraActive() {
   }
 
   function takePicture() {
-    // 여기에 카메라 촬영 로직을 추가합니다.
+    // 여기에 카메라 촬영 로직을 추가.
     console.log("Picture Taken!");
   }
 
   return (
     <View style={styles.container}>
+      {/* 뒤로가기 버튼 */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.goBack()}
+      >
+        <Icon name="arrow-back" size={30} color="white" />
+      </TouchableOpacity>
+
       <CameraView style={styles.camera} facing={facing}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.shutterButton} onPress={takePicture}>
@@ -54,6 +62,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+  },
+  backButton: {
+    position: "absolute",
+    top: 40,
+    left: 20,
+    zIndex: 1,
   },
   message: {
     textAlign: "center",

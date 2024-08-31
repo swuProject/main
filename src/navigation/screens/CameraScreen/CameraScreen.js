@@ -1,10 +1,13 @@
-import * as React from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { createStackNavigator } from "@react-navigation/stack";
 
-export default function CameraScreen() {
-  const navigation = useNavigation();
+// Screens
+import CameraActive from "./CameraActive";
 
+const CameraStack = createStackNavigator();
+
+const CameraScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       {/* 게시글 작성 버튼 */}
@@ -21,7 +24,28 @@ export default function CameraScreen() {
       </TouchableOpacity>
     </View>
   );
-}
+};
+
+const CameraStackScreen = () => {
+  return (
+    <CameraStack.Navigator
+      screenOptions={{
+        headerShown: false, // 헤더를 숨기기 위한 옵션
+      }}
+    >
+      <CameraStack.Screen
+        name="CameraScreen"
+        component={CameraScreen}
+        options={{ title: "Camera" }}
+      />
+      <CameraStack.Screen
+        name="CameraActive"
+        component={CameraActive}
+        options={{ title: "Camera Active" }}
+      />
+    </CameraStack.Navigator>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -52,3 +76,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
+
+export default CameraStackScreen;
