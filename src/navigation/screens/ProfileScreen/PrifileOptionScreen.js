@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-na
 export default function ProfileOptionScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.optionContainer} onPress={() => navigation.navigate('ChangePassword')}>
+      <TouchableOpacity style={styles.optionContainer} onPress={() => navigation.navigate('DeleteUser')}>
         <Text style={styles.optionText}>계정 관리</Text>
       </TouchableOpacity>
       <View style={styles.optionContainer}>

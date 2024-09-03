@@ -1,44 +1,84 @@
 import React, { useState, useCallback, useLayoutEffect } from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
-const ProfileScreen = ({ route }) => {
+const ProfileScreen = () => {
   const [name, setName] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [account, setAccount] = useState("");
   const [describeSelf, setDescribeSelf] = useState("");
   const [profileImgPath, setProfileImgPath] = useState(
     "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
   ); // 기본 프로필 URL
+  const [loading, setLoading] = useState(true); // 로딩 상태 추가
 
   const navigation = useNavigation();
+  const baseUrl = "https://tuituiworld.store:8443";
 
   const fetchProfile = useCallback(async () => {
+    setLoading(true); // 로딩 시작
+
     try {
-      const storedNickname = await AsyncStorage.getItem('nickname');
-      const storedName = await AsyncStorage.getItem('name');
-      const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
-      const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
+      const userId = await AsyncStorage.getItem('userId'); // AsyncStorage에서 userId 가져오기
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      const storedProfileImg = await AsyncStorage.getItem('profileImage'); // 저장된 프로필 이미지 가져오기
 
-      if (storedNickname) setNickname(storedNickname);
-      if (storedName) setName(storedName);
-      if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
+      if (!userId || !accessToken) {
+        console.log("userId 또는 token이 없습니다.");
+        return;
+      }
 
-      if (storedProfileImgPath && storedProfileImgPath.trim() !== "") {
-        fetch(storedProfileImgPath, { method: 'HEAD' })
-          .then(response => {
-            if (response.ok) {
-              setProfileImgPath(storedProfileImgPath);
-            }
-          })
-          .catch(() => {
-            setProfileImgPath(
-              "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-            );
-          });
+      // 저장된 프로필 이미지 URL이 있는 경우 설정
+      if (storedProfileImg) {
+        setProfileImgPath(storedProfileImg);
+      }
+
+      const response = await fetch(`${baseUrl}/api/users/${userId}/profiles`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const responseBody = await response.json();
+      console.log('Response Body:', responseBody);
+
+      if (response.ok) {
+        const data = responseBody.data;
+
+        setAccount(data.nickname || "닉네임 없음");
+        setName(data.name || "이름 없음");
+        setDescribeSelf(data.describeSelf || "자기소개 없음");
+
+        const profileImgUrl = data.profileImgPath;
+        if (profileImgUrl && profileImgUrl.trim() !== "") {
+          // 이미지 경로 유효성 검사
+          fetch(profileImgUrl, { method: 'HEAD' })
+            .then(response => {
+              if (response.ok) {
+                setProfileImgPath(profileImgUrl);
+                // AsyncStorage에 이미지 URL 저장
+                AsyncStorage.setItem('profileImage', profileImgUrl);
+              } else {
+                setProfileImgPath(
+                  "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
+                );
+              }
+            })
+            .catch(() => {
+              setProfileImgPath(
+                "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
+              );
+            });
+        }
+      } else {
+        console.error("프로필 정보 가져오기 실패:", response.status);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false); // 로딩 끝
     }
   }, []);
 
@@ -53,34 +93,40 @@ const ProfileScreen = ({ route }) => {
     navigation.setOptions({
       headerLeft: () => (
         <View style={styles.headerLeft}>
-          <Text style={styles.nickname}>{nickname || '닉네임 없음'}</Text>
+          <Text style={styles.account}>{account || '닉네임 없음'}</Text>
         </View>
       ),
     });
-  }, [navigation, nickname]);
+  }, [navigation, account]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.profileHeader}>
-        <Image style={styles.img} source={{ uri: profileImgPath }} />
-        <View style={styles.stats}>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>게시글</Text>
+      {loading ? ( // 로딩 중 표시
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <>
+          <View style={styles.profileHeader}>
+            <Image style={styles.img} source={{ uri: profileImgPath }} />
+            <View style={styles.stats}>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>게시글</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>팔로워</Text>
+              </View>
+              <View style={styles.stat}>
+                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statLabel}>팔로잉</Text>
+              </View>
+            </View>
           </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>팔로워</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statNumber}>0</Text>
-            <Text style={styles.statLabel}>팔로잉</Text>
-          </View>
-        </View>
-      </View>
-      <Text style={styles.name}>{name}</Text>
-      <Text style={styles.describeSelf}>{describeSelf}</Text>
-      <View style={styles.posts}></View>
+          <Text style={styles.name}>{name}</Text>
+          <Text style={styles.describeSelf}>{describeSelf}</Text>
+          <View style={styles.posts}></View>
+        </>
+      )}
     </View>
   );
 };
@@ -111,7 +157,7 @@ const styles = StyleSheet.create({
   },
   stat: {
     alignItems: 'center',
-    marginHorizontal: 28,
+    marginHorizontal: 24,
   },
   statNumber: {
     fontSize: 18,
@@ -126,7 +172,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  nickname: {
+  account: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'black',
