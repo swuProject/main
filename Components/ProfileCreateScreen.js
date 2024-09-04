@@ -24,6 +24,8 @@ function ProfileCreateScreen({ navigation }) {
         const storedBirthday = await AsyncStorage.getItem("birthday");
         const storedGender = await AsyncStorage.getItem("gender");
         const storedProfileImgPath = await AsyncStorage.getItem("profileImgPath");
+        const storedNickname = await AsyncStorage.getItem("nickname");
+        const storedDescribeSelf = await AsyncStorage.getItem("describeSelf");
 
         setName(storedName || "");
         setPhone(storedPhone || "");
@@ -32,8 +34,10 @@ function ProfileCreateScreen({ navigation }) {
         setBirthday(storedBirthday || "");
         setGender(storedGender === "male" ? "MALE" : storedGender === "female" ? "FEMALE" : "");
         setProfileImgPath(storedProfileImgPath || "");
+        setNickname(storedNickname || "");
+        setdescribeSelf(storedDescribeSelf || "");
       } catch (error) {
-        console.error("Failed to load profile data", error);
+        console.error("프로필 데이터를 불러오는 데 실패했습니다.", error);
       }
     };
 
@@ -45,17 +49,21 @@ function ProfileCreateScreen({ navigation }) {
       Alert.alert("오류", "입력란을 모두 채워주세요.");
       return;
     }
-  
+
     try {
       let accessToken = await AsyncStorage.getItem("accessToken");
       const userId = await AsyncStorage.getItem("userId");
-  
+
       if (!userId) {
         Alert.alert("오류", "로그인이 필요합니다.");
         navigation.navigate("Login");
         return;
       }
-  
+
+      // nickname과 describeSelf를 AsyncStorage에 저장
+      await AsyncStorage.setItem("nickname", nickname);
+      await AsyncStorage.setItem("describeSelf", describeSelf);
+
       // 프로필 데이터 정의
       const profileData = {
         userId,
@@ -66,7 +74,7 @@ function ProfileCreateScreen({ navigation }) {
         gender,
         birthDate: formatDate(),
       };
-  
+
       // 액세스 토큰 만료 확인 및 갱신
       let response = await fetch("https://tuituiworld.store:8443/api/profiles/without-image", {
         method: "POST",
@@ -76,7 +84,7 @@ function ProfileCreateScreen({ navigation }) {
         },
         body: JSON.stringify(profileData),
       });
-  
+
       if (response.status === 401) { // Unauthorized
         const newAccessToken = await refreshToken();
         if (newAccessToken) {
@@ -96,7 +104,7 @@ function ProfileCreateScreen({ navigation }) {
           return;
         }
       }
-  
+
       if (response.ok) {
         Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
         navigation.navigate("MainContainer");
@@ -109,7 +117,7 @@ function ProfileCreateScreen({ navigation }) {
       console.error("오류", error);
       Alert.alert("오류", "프로필 생성 중 오류가 발생했습니다.");
     }
-  };  
+  };
 
   const formatDate = () => {
     if (birthyear && birthday.length === 4) {

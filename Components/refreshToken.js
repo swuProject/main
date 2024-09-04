@@ -37,9 +37,10 @@ export const refreshToken = async () => {
       
       return accessToken;
     } else {
+      console.error('토큰 재발급 실패 - 서버 응답 오류:', response);
     }
   } catch (error) {
-    console.error('access Token 재발급 오류:', error);
+    console.error('로그인 정보 없음', error);
     throw error;
   }
 };

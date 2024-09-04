@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import { refreshToken } from '../../../Components/refreshToken';
+import { refreshToken } from './refreshToken';
 
 export default function DeleteUserScreen() {
   const navigation = useNavigation();
@@ -51,6 +51,8 @@ export default function DeleteUserScreen() {
                 } else {
                   const responseBody = await response.text();
                   if (response.ok) {
+                    // 계정 삭제 성공 후 AsyncStorage의 모든 정보 삭제
+                    await AsyncStorage.clear();
                     Alert.alert("탈퇴 완료", "계정이 성공적으로 삭제되었습니다.");
                     navigation.reset({
                       index: 0,

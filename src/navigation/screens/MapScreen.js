@@ -6,6 +6,7 @@ import {
   TextInput,
   Button,
   Text,
+  TouchableOpacity
 } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
@@ -18,14 +19,12 @@ export default function MapScreen() {
 
   useEffect(() => {
     (async () => {
-      // 권한 요청
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
         setErrorMsg("Permission to access location was denied");
         return;
       }
 
-      // 현재 위치 가져오기
       let { coords } = await Location.getCurrentPositionAsync({});
       setLocation(coords);
       setRegion({
@@ -59,15 +58,6 @@ export default function MapScreen() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.input}
-        placeholder="장소•주소 검색"
-        value={address}
-        onChangeText={setAddress}
-      />
-      <Button title="검색" onPress={handleSearch} />
-      {/* 오류확인메시지 나중에 삭제 */}
-      {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
       <MapView
         style={styles.map}
         region={region}
@@ -85,6 +75,18 @@ export default function MapScreen() {
           />
         )}
       </MapView>
+      <View style={styles.overlay}>
+        <TextInput
+          style={styles.input}
+          placeholder="장소•주소 검색"
+          value={address}
+          onChangeText={setAddress}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleSearch}>
+          <Text style={styles.buttonText}>검색</Text>
+        </TouchableOpacity>
+        {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
+      </View>
     </View>
   );
 }
@@ -92,20 +94,39 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: 'relative',
   },
   map: {
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height - 60, // Adjust height based on input field and button
+    ...StyleSheet.absoluteFillObject, // 화면 꽉 채우기
+  },
+  overlay: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    right: 10,
+    padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // 반투명하게
+    borderRadius: 8,
   },
   input: {
     height: 40,
-    borderColor: "gray",
+    borderColor: "#BBBBBB",
     borderWidth: 1,
-    margin: 10,
+    borderRadius: 16,
     paddingHorizontal: 8,
+    marginBottom: 10,
+  },
+  button: {
+    backgroundColor: '#007BFF',
+    padding: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#fff',
+    textAlign: 'center',
   },
   errorText: {
     color: "red",
-    margin: 10,
+    marginTop: 10,
   },
 });

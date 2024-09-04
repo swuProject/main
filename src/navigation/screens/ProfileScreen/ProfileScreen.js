@@ -2,38 +2,38 @@ import React, { useState, useCallback, useLayoutEffect } from 'react';
 import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { refreshToken } from '../../../../Components/refreshToken';
+
+const base_url = "https://tuituiworld.store:8443";
+const defaultImg = "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png";
 
 const ProfileScreen = () => {
   const [name, setName] = useState("");
   const [account, setAccount] = useState("");
   const [describeSelf, setDescribeSelf] = useState("");
-  const [profileImgPath, setProfileImgPath] = useState(
-    "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-  ); // 기본 프로필 URL
-  const [loading, setLoading] = useState(true); // 로딩 상태 추가
+  const [profileImgPath, setProfileImgPath] = useState(defaultImg);
+  const [loading, setLoading] = useState(true);
 
   const navigation = useNavigation();
-  const baseUrl = "https://tuituiworld.store:8443";
 
   const fetchProfile = useCallback(async () => {
-    setLoading(true); // 로딩 시작
+    setLoading(true);
 
     try {
-      const userId = await AsyncStorage.getItem('userId'); // AsyncStorage에서 userId 가져오기
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      const storedProfileImg = await AsyncStorage.getItem('profileImage'); // 저장된 프로필 이미지 가져오기
+      const userId = await AsyncStorage.getItem('userId');
+      let accessToken = await AsyncStorage.getItem('accessToken');
+      const storedProfileImg = await AsyncStorage.getItem('profileImgPath');
 
       if (!userId || !accessToken) {
-        console.log("userId 또는 token이 없습니다.");
+        console.error("User ID or access token is missing.");
         return;
       }
 
-      // 저장된 프로필 이미지 URL이 있는 경우 설정
       if (storedProfileImg) {
         setProfileImgPath(storedProfileImg);
       }
 
-      const response = await fetch(`${baseUrl}/api/users/${userId}/profiles`, {
+      let response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -41,55 +41,50 @@ const ProfileScreen = () => {
         },
       });
 
-      const responseBody = await response.json();
-      console.log('Response Body:', responseBody);
+      if (response.status === 401) {
+        accessToken = await refreshToken();
+        if (accessToken) {
+          response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          });
+        }
+      }
 
       if (response.ok) {
-        const data = responseBody.data;
+        const data = await response.json();
+        const { nickname, name, describeSelf, profileImgPath } = data.data;
 
-        setAccount(data.nickname || "닉네임 없음");
-        setName(data.name || "이름 없음");
-        setDescribeSelf(data.describeSelf || "자기소개 없음");
+        setAccount(nickname || "닉네임 없음");
+        setName(name || "이름 없음");
+        setDescribeSelf(describeSelf || "자기소개 없음");
 
-        const profileImgUrl = data.profileImgPath;
-        if (profileImgUrl && profileImgUrl.trim() !== "") {
-          // 이미지 경로 유효성 검사
-          fetch(profileImgUrl, { method: 'HEAD' })
-            .then(response => {
-              if (response.ok) {
-                setProfileImgPath(profileImgUrl);
-                // AsyncStorage에 이미지 URL 저장
-                AsyncStorage.setItem('profileImage', profileImgUrl);
-              } else {
-                setProfileImgPath(
-                  "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-                );
-              }
-            })
-            .catch(() => {
-              setProfileImgPath(
-                "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-              );
-            });
+        if (profileImgPath) {
+          fetch(profileImgPath, { method: 'HEAD' })
+            .then(res => res.ok ? setProfileImgPath(profileImgPath) : setProfileImgPath(defaultImg))
+            .catch(() => setProfileImgPath(defaultImg));
+          AsyncStorage.setItem('profileImgPath', profileImgPath);
         }
       } else {
-        console.error("프로필 정보 가져오기 실패:", response.status);
+        console.error("Failed to fetch profile information:", response.status);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
     } finally {
-      setLoading(false); // 로딩 끝
+      setLoading(false);
     }
   }, []);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       fetchProfile();
     }, [fetchProfile])
   );
 
   useLayoutEffect(() => {
-    // 헤더 옵션 설정
     navigation.setOptions({
       headerLeft: () => (
         <View style={styles.headerLeft}>
@@ -101,7 +96,7 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      {loading ? ( // 로딩 중 표시
+      {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <>

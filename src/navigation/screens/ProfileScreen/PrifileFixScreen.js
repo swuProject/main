@@ -1,139 +1,136 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { refreshToken } from '../../../../Components/refreshToken';
 
-const ProfileScreen = () => {
-  const [name, setName] = useState("");
-  const [account, setAccount] = useState("");
+// 프로필 정보를 서버에 저장하는 함수
+const saveUserProfile = async (userId, nickname, describeSelf, profileImgPath, accessToken) => {
+  try {
+    const response = await fetch(`https://tuituiworld.store:8443/api/profiles`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ userId, nickname, describeSelf, profileImgPath }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text(); // 서버에서 반환된 에러 메시지
+      throw new Error(`프로필 저장에 실패했습니다. 서버 응답: ${errorData}`);
+    }
+  } catch (error) {
+    throw new Error(`프로필 저장에 실패했습니다. 오류: ${error.message}`);
+  }
+};
+
+const ProfileFixScreen = ({ navigation }) => {
+  const [userId, setUserId] = useState("");
+  const [realName, setRealName] = useState("");
+  const [nickname, setNickname] = useState("");
   const [describeSelf, setDescribeSelf] = useState("");
   const [profileImgPath, setProfileImgPath] = useState(
     "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  ); // 기본 프로필 URL
 
-  const navigation = useNavigation();
-  const baseUrl = "https://tuituiworld.store:8443";
+  // 프로필 정보 가져오기
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const storedUserId = await AsyncStorage.getItem('userId');
+        const storedName = await AsyncStorage.getItem('name');
+        const storedNickname = await AsyncStorage.getItem('nickname');
+        const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
+        const storedProfileImgPath = await AsyncStorage.getItem('profileImage');
 
-  const fetchProfile = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+        // 디버깅 로그
+        console.log('Fetched UserId:', storedUserId);
+        console.log('Fetched Name:', storedName);
+        console.log('Fetched Nickname:', storedNickname);
+        console.log('Fetched DescribeSelf:', storedDescribeSelf);
+        console.log('Fetched ProfileImgPath:', storedProfileImgPath);
 
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      let accessToken = await AsyncStorage.getItem('accessToken');
-
-      if (!userId || !accessToken) {
-        console.log("userId 또는 accessToken이 없습니다.");
-        return;
+        // 상태 업데이트
+        if (storedUserId) setUserId(storedUserId);
+        if (storedName) setRealName(storedName);
+        if (storedNickname) setNickname(storedNickname);
+        if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
+        if (storedProfileImgPath) setProfileImgPath(storedProfileImgPath);
+      } catch (error) {
+        console.log('Error fetching profile:', error);
       }
+    };
 
-      let response = await fetch(`${baseUrl}/api/users/${userId}/profiles`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      // Unauthorized 오류가 발생하면 새 토큰 발급 후 다시 실행
-      if (response.status === 401) {
-        accessToken = await refreshToken();
-        response = await fetch(`${baseUrl}/api/users/${userId}/profiles`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        });
-      }
-
-      const responseBody = await response.json();
-
-      if (response.ok) {
-
-        const data = responseBody.data;
-        setAccount(data.nickname || "닉네임 없음");
-        setName(data.name || "이름 없음");
-        setDescribeSelf(data.describeSelf || "자기소개 없음");
-
-        const profileImgUrl = data.profileImgPath;
-        if (profileImgUrl && profileImgUrl.trim() !== "") {
-          fetch(profileImgUrl, { method: 'HEAD' })
-            .then(response => {
-              if (response.ok) {
-                setProfileImgPath(profileImgUrl);
-                AsyncStorage.setItem('profileImage', profileImgUrl);
-              } else {
-                setProfileImgPath(
-                  "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-                );
-              }
-            })
-            .catch(() => {
-              setProfileImgPath(
-                "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
-              );
-            });
-        }
-      } else {
-        console.error("프로필 정보 가져오기 실패:", response.status);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-      setError('프로필 정보를 가져오는 데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
+    fetchProfile();
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchProfile();
-    }, [fetchProfile])
-  );
+  // 프로필 저장 핸들러
+  const handleSaveProfile = async () => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        Alert.alert("오류", "액세스 토큰이 없습니다. 로그인 상태를 확인하세요.");
+        return;
+      }
+  
+      // 유저 ID가 제대로 설정되었는지 확인
+      if (userId === null) {
+        Alert.alert("오류", "유저 ID를 찾을 수 없습니다.");
+        return;
+      }
+  
+      await saveUserProfile(userId, nickname, describeSelf, profileImgPath, accessToken);
+      await AsyncStorage.setItem('nickname', nickname);
+      await AsyncStorage.setItem('describeSelf', describeSelf);
+      await AsyncStorage.setItem('profileImgPath', profileImgPath);
+      Alert.alert("성공", "프로필이 저장되었습니다.");
+      navigation.goBack(); // 이전 화면으로 이동
+    } catch (error) {
+      Alert.alert("오류", error.message);
+    }
+  };
+  
 
+  // 네비게이션 옵션 설정
   useEffect(() => {
     navigation.setOptions({
-      headerLeft: () => (
-        <View style={styles.headerLeft}>
-          <Text style={styles.account}>{account || '닉네임 없음'}</Text>
-        </View>
+      headerRight: () => (
+        <TouchableOpacity onPress={handleSaveProfile}>
+          <Text style={styles.headerButtonText}>완료</Text>
+        </TouchableOpacity>
       ),
     });
-  }, [navigation, account]);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
-      {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
-      ) : (
-        <>
-          {error && <Text style={styles.error}>{error}</Text>}
-          <View style={styles.profileHeader}>
-            <Image style={styles.img} source={{ uri: profileImgPath }} />
-            <View style={styles.stats}>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>게시글</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>팔로워</Text>
-              </View>
-              <View style={styles.stat}>
-                <Text style={styles.statNumber}>0</Text>
-                <Text style={styles.statLabel}>팔로잉</Text>
-              </View>
-            </View>
-          </View>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.describeSelf}>{describeSelf}</Text>
-          <View style={styles.posts}></View>
-        </>
-      )}
+      <View style={styles.profileSection}>
+        <Image style={styles.img} source={{ uri: profileImgPath }} />
+        <TouchableOpacity>
+          <Text style={styles.changeButton}>사진 변경</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.textBox}>
+        <Text style={styles.label}>이름</Text>
+        <Text style={styles.font}>{realName}</Text>
+      </View>
+      <View style={styles.textBox}>
+        <Text style={styles.label}>닉네임</Text>
+        <TextInput
+          style={styles.input}
+          value={nickname}
+          onChangeText={setNickname}
+          autoCapitalize="none"
+        />
+      </View>
+      <View style={styles.textBox}>
+        <Text style={styles.label}>설명</Text>
+        <TextInput
+          style={styles.input}
+          value={describeSelf}
+          onChangeText={setDescribeSelf}
+          autoCapitalize="none"
+        />
+      </View>
     </View>
   );
 };
@@ -141,64 +138,49 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 20,
     backgroundColor: '#fff',
   },
-  profileHeader: {
-    flexDirection: 'row',
+  profileSection: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 30,
   },
   img: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    marginRight: 16,
-    marginLeft: 8,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
-  stats: {
+  changeButton: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#4F8BFF",
+  },
+  textBox: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 30,
   },
-  stat: {
-    alignItems: 'center',
-    marginHorizontal: 24,
-  },
-  statNumber: {
+  label: {
     fontSize: 18,
+    marginRight: 20,
     fontWeight: 'bold',
   },
-  statLabel: {
-    fontSize: 14,
-    color: '#888',
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  account: {
+  input: {
+    flex: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
     fontSize: 18,
+    paddingVertical: 5,
+  },
+  headerButtonText: {
+    color: "#4F8BFF",
+    fontSize: 18,
+    marginRight: 10,
     fontWeight: 'bold',
-    color: 'black',
   },
-  describeSelf: {
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  posts: {
-    flexDirection: 'row',
-  },
-  headerLeft: {
-    marginLeft: 16,
-  },
-  error: {
-    fontSize: 16,
-    color: 'red',
-    marginBottom: 16,
+  font: {
+    fontSize: 18,
   },
 });
 
-export default ProfileScreen;
+export default ProfileFixScreen;

@@ -8,9 +8,9 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import SplashScreen from "./Components/SplashScreen";
 import Loginscreen from "./Components/Loginscreen";
 import ProfileCreateScreen from "./Components/ProfileCreateScreen";
+import DeleteUserScreen from "./Components/DeleteUserScreen";
 
 import MainContainer from "./src/navigation/MainContainer";
-import DeleteUserScreen from "./src/navigation/screens/DeleteUserScreen";
 import ProfileOptionScreen from "./src/navigation/screens/ProfileScreen/PrifileOptionScreen";
 import ProfileScreen from "./src/navigation/screens/ProfileScreen/ProfileScreen";
 import ProfileFixScreen from "./src/navigation/screens/ProfileScreen/PrifileFixScreen";
