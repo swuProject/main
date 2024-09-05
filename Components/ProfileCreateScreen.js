@@ -32,7 +32,8 @@ function ProfileCreateScreen({ navigation }) {
         setAccount(storedAccount || "");
         setBirthyear(storedBirthyear || "");
         setBirthday(storedBirthday || "");
-        setGender(storedGender === "male" ? "MALE" : storedGender === "female" ? "FEMALE" : "");
+        setGender(storedGender === "male" || storedGender === "M" ? "MALE" : 
+          storedGender === "female" || storedGender === "F" ? "FEMALE" : "");        
         setProfileImgPath(storedProfileImgPath || "");
         setNickname(storedNickname || "");
         setdescribeSelf(storedDescribeSelf || "");
@@ -120,14 +121,21 @@ function ProfileCreateScreen({ navigation }) {
   };
 
   const formatDate = () => {
-    if (birthyear && birthday.length === 4) {
-      const month = birthday.slice(0, 2);
-      const day = birthday.slice(2, 4);
-      return `${birthyear}-${month}-${day}`;
+    if (birthyear && birthday) {
+      if (birthday.length === 4) {
+        // mmdd 형식일 때 처리
+        const month = birthday.slice(0, 2);
+        const day = birthday.slice(2, 4);
+        return `${birthyear}-${month}-${day}`;
+      } else if (birthday.includes("-")) {
+        // mm-dd 형식일 때 처리
+        const [month, day] = birthday.split("-");
+        return `${birthyear}-${month}-${day}`;
+      }
     }
     return "";
   };
-
+  
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {profileImgPath ? (
@@ -177,7 +185,7 @@ function ProfileCreateScreen({ navigation }) {
           <TextInput
             style={styles.inputText}
             value={nickname}
-            placeholder="2자 이상 20자 이하로 입력해 주세요."
+            placeholder="영문과 숫자 2~15자 범위 내에서 입력해 주세요."
             onChangeText={setNickname}
           />
         </View>

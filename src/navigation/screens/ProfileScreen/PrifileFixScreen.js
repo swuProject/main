@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// 프로필 정보를 서버에 저장하는 함수
-const saveUserProfile = async (userId, nickname, describeSelf, profileImgPath, accessToken) => {
+// 프로필 정보를 서버에 저장하는 함수 (닉네임과 자기소개만 전송)
+const saveUserProfile = async (userId, nickname, describeSelf, accessToken) => {
   try {
     const response = await fetch(`https://tuituiworld.store:8443/api/profiles`, {
       method: "PUT",
@@ -11,11 +11,11 @@ const saveUserProfile = async (userId, nickname, describeSelf, profileImgPath, a
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ userId, nickname, describeSelf, profileImgPath }),
+      body: JSON.stringify({ userId, nickname, describeSelf }),
     });
 
     if (!response.ok) {
-      const errorData = await response.text(); // 서버에서 반환된 에러 메시지
+      const errorData = await response.text();
       throw new Error(`프로필 저장에 실패했습니다. 서버 응답: ${errorData}`);
     }
   } catch (error) {
@@ -42,13 +42,6 @@ const ProfileFixScreen = ({ navigation }) => {
         const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
         const storedProfileImgPath = await AsyncStorage.getItem('profileImage');
 
-        // 디버깅 로그
-        console.log('Fetched UserId:', storedUserId);
-        console.log('Fetched Name:', storedName);
-        console.log('Fetched Nickname:', storedNickname);
-        console.log('Fetched DescribeSelf:', storedDescribeSelf);
-        console.log('Fetched ProfileImgPath:', storedProfileImgPath);
-
         // 상태 업데이트
         if (storedUserId) setUserId(storedUserId);
         if (storedName) setRealName(storedName);
@@ -63,32 +56,29 @@ const ProfileFixScreen = ({ navigation }) => {
     fetchProfile();
   }, []);
 
-  // 프로필 저장 핸들러
   const handleSaveProfile = async () => {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
+      // 엑세스 토큰이 있는지 확인
       if (!accessToken) {
         Alert.alert("오류", "액세스 토큰이 없습니다. 로그인 상태를 확인하세요.");
         return;
       }
-  
-      // 유저 ID가 제대로 설정되었는지 확인
+      // 유저 ID가 있는지 확인
       if (userId === null) {
         Alert.alert("오류", "유저 ID를 찾을 수 없습니다.");
         return;
       }
   
-      await saveUserProfile(userId, nickname, describeSelf, profileImgPath, accessToken);
+      await saveUserProfile(userId, nickname, describeSelf, accessToken);
       await AsyncStorage.setItem('nickname', nickname);
       await AsyncStorage.setItem('describeSelf', describeSelf);
-      await AsyncStorage.setItem('profileImgPath', profileImgPath);
       Alert.alert("성공", "프로필이 저장되었습니다.");
       navigation.goBack(); // 이전 화면으로 이동
     } catch (error) {
       Alert.alert("오류", error.message);
     }
   };
-  
 
   // 네비게이션 옵션 설정
   useEffect(() => {
@@ -99,7 +89,7 @@ const ProfileFixScreen = ({ navigation }) => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation]);
+  }, [navigation, nickname, describeSelf]); // 닉네임과 설명이 변경되면 반영
 
   return (
     <View style={styles.container}>
@@ -118,7 +108,7 @@ const ProfileFixScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           value={nickname}
-          onChangeText={setNickname}
+          onChangeText={setNickname} // 유저 입력값을 상태로 업데이트
           autoCapitalize="none"
         />
       </View>
@@ -127,7 +117,7 @@ const ProfileFixScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           value={describeSelf}
-          onChangeText={setDescribeSelf}
+          onChangeText={setDescribeSelf} // 유저 입력값을 상태로 업데이트
           autoCapitalize="none"
         />
       </View>

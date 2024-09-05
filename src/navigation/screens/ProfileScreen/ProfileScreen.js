@@ -18,21 +18,24 @@ const ProfileScreen = () => {
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
-
+  
     try {
       const userId = await AsyncStorage.getItem('userId');
       let accessToken = await AsyncStorage.getItem('accessToken');
       const storedProfileImg = await AsyncStorage.getItem('profileImgPath');
-
+  
+      console.log("User ID:", userId);
+      console.log("Access Token:", accessToken);
+  
       if (!userId || !accessToken) {
         console.error("User ID or access token is missing.");
         return;
       }
-
+  
       if (storedProfileImg) {
         setProfileImgPath(storedProfileImg);
       }
-
+  
       let response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
         method: 'GET',
         headers: {
@@ -40,7 +43,7 @@ const ProfileScreen = () => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       if (response.status === 401) {
         accessToken = await refreshToken();
         if (accessToken) {
@@ -53,15 +56,15 @@ const ProfileScreen = () => {
           });
         }
       }
-
+  
       if (response.ok) {
         const data = await response.json();
         const { nickname, name, describeSelf, profileImgPath } = data.data;
-
+  
         setAccount(nickname || "닉네임 없음");
         setName(name || "이름 없음");
-        setDescribeSelf(describeSelf || "자기소개 없음");
-
+        setDescribeSelf(describeSelf || "");
+  
         if (profileImgPath) {
           fetch(profileImgPath, { method: 'HEAD' })
             .then(res => res.ok ? setProfileImgPath(profileImgPath) : setProfileImgPath(defaultImg))
@@ -77,6 +80,7 @@ const ProfileScreen = () => {
       setLoading(false);
     }
   }, []);
+  
 
   useFocusEffect(
     useCallback(() => {
