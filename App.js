@@ -8,6 +8,7 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import SplashScreen from "./Components/SplashScreen";
 import Loginscreen from "./Components/Loginscreen";
 import ProfileCreateScreen from "./Components/ProfileCreateScreen";
+import LogoutScreen from "./Components/LogoutScreen";
 import DeleteUserScreen from "./Components/DeleteUserScreen";
 
 import MainContainer from "./src/navigation/MainContainer";
@@ -51,6 +52,26 @@ const App = () => {
           component={DeleteUserScreen}
           options={{
             title: "탈퇴하기",
+            headerTitleStyle: {
+              fontSize: 24,
+              fontWeight: "bold",
+            },
+            headerBackImage: () => (
+              <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
+                style={{ paddingLeft: 10 }}
+              />
+            ),
+            headerBackTitleVisible: false,
+          }}
+        />
+        <Stack.Screen
+          name="Logout"
+          component={LogoutScreen}
+          options={{
+            title: "로그아웃",
             headerTitleStyle: {
               fontSize: 24,
               fontWeight: "bold",

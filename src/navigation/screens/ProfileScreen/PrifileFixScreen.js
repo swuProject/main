@@ -89,7 +89,7 @@ const ProfileFixScreen = ({ navigation }) => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, nickname, describeSelf]); // 닉네임과 설명이 변경되면 반영
+  }, [navigation, nickname, describeSelf]);
 
   return (
     <View style={styles.container}>
@@ -108,16 +108,16 @@ const ProfileFixScreen = ({ navigation }) => {
         <TextInput
           style={styles.input}
           value={nickname}
-          onChangeText={setNickname} // 유저 입력값을 상태로 업데이트
+          onChangeText={setNickname}
           autoCapitalize="none"
         />
       </View>
       <View style={styles.textBox}>
-        <Text style={styles.label}>설명</Text>
+        <Text style={styles.label}>자기소개</Text>
         <TextInput
           style={styles.input}
           value={describeSelf}
-          onChangeText={setDescribeSelf} // 유저 입력값을 상태로 업데이트
+          onChangeText={setDescribeSelf}
           autoCapitalize="none"
         />
       </View>

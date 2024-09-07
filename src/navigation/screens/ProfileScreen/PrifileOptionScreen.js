@@ -13,6 +13,9 @@ export default function ProfileOptionScreen({ navigation }) {
       <View style={styles.optionContainer}>
         <Text style={styles.optionText}>차단 관리</Text>
       </View>
+      <TouchableOpacity style={styles.optionContainer} onPress={() => navigation.navigate('Logout')}>
+        <Text style={styles.optionText}>로그아웃</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }

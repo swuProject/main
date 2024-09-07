@@ -24,9 +24,6 @@ const ProfileScreen = () => {
       let accessToken = await AsyncStorage.getItem('accessToken');
       const storedProfileImg = await AsyncStorage.getItem('profileImgPath');
   
-      console.log("User ID:", userId);
-      console.log("Access Token:", accessToken);
-  
       if (!userId || !accessToken) {
         console.error("User ID or access token is missing.");
         return;
