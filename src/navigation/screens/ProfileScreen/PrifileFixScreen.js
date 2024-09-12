@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { launchImageLibrary } from 'react-native-image-picker';
 
 // 프로필 정보를 서버에 저장하는 함수 (닉네임과 자기소개만 전송)
 const saveUserProfile = async (userId, nickname, describeSelf, accessToken) => {
@@ -23,6 +24,45 @@ const saveUserProfile = async (userId, nickname, describeSelf, accessToken) => {
   }
 };
 
+// 프로필 이미지를 서버에 업로드하는 함수
+const uploadProfileImage = async (accessToken, imageUri) => {
+  const storedProfileId = await AsyncStorage.getItem('profileId');
+  const profileId = storedProfileId ? JSON.parse(storedProfileId) : null;
+
+  if (!profileId) {
+    throw new Error("프로필 ID가 없습니다.");
+  }
+
+  const formData = new FormData();
+  const cleanedImagePath = imageUri.startsWith("file://") ? imageUri.replace("file://", "") : imageUri;
+
+  formData.append("profileId", profileId);
+  formData.append("file", {
+    uri: cleanedImagePath,
+    type: 'image/jpeg', // 이미지 파일의 MIME 타입
+    name: 'profile.jpg', // 업로드될 파일 이름
+  });
+
+  try {
+    const response = await fetch("https://tuituiworld.store:8443/api/profiles/images", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(`이미지 업로드에 실패했습니다. 서버 응답: ${errorData}`);
+    }
+
+    return response;
+  } catch (error) {
+    throw new Error(`이미지 업로드 중 오류가 발생했습니다: ${error.message}`);
+  }
+};
+
 const ProfileFixScreen = ({ navigation }) => {
   const [userId, setUserId] = useState("");
   const [realName, setRealName] = useState("");
@@ -40,14 +80,14 @@ const ProfileFixScreen = ({ navigation }) => {
         const storedName = await AsyncStorage.getItem('name');
         const storedNickname = await AsyncStorage.getItem('nickname');
         const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
-        const storedProfileImgPath = await AsyncStorage.getItem('profileImage');
+        const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
 
-        // 상태 업데이트
         if (storedUserId) setUserId(storedUserId);
         if (storedName) setRealName(storedName);
         if (storedNickname) setNickname(storedNickname);
         if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
         if (storedProfileImgPath) setProfileImgPath(storedProfileImgPath);
+
       } catch (error) {
         console.log('Error fetching profile:', error);
       }
@@ -56,23 +96,40 @@ const ProfileFixScreen = ({ navigation }) => {
     fetchProfile();
   }, []);
 
+  const handleImagePicker = () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
+      if (response.didCancel) {
+        console.log("이미지 선택 취소");
+      } else if (response.errorCode) {
+        console.error("이미지 선택 오류:", response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        setProfileImgPath(response.assets[0].uri); // 선택한 이미지 경로를 상태에 저장
+      }
+    });
+  };
+
   const handleSaveProfile = async () => {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
-      // 엑세스 토큰이 있는지 확인
       if (!accessToken) {
         Alert.alert("오류", "액세스 토큰이 없습니다. 로그인 상태를 확인하세요.");
         return;
       }
-      // 유저 ID가 있는지 확인
-      if (userId === null) {
+      if (userId === "") {
         Alert.alert("오류", "유저 ID를 찾을 수 없습니다.");
         return;
       }
-  
+
+      // 이미지가 변경되었을 경우 업로드 처리
+      if (profileImgPath && !profileImgPath.includes('cloudfront.net')) {
+        await uploadProfileImage(accessToken, profileImgPath);
+      }
+
+      // 닉네임과 자기소개 저장
       await saveUserProfile(userId, nickname, describeSelf, accessToken);
       await AsyncStorage.setItem('nickname', nickname);
       await AsyncStorage.setItem('describeSelf', describeSelf);
+      
       Alert.alert("성공", "프로필이 저장되었습니다.");
       navigation.goBack(); // 이전 화면으로 이동
     } catch (error) {
@@ -80,7 +137,6 @@ const ProfileFixScreen = ({ navigation }) => {
     }
   };
 
-  // 네비게이션 옵션 설정
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -89,13 +145,13 @@ const ProfileFixScreen = ({ navigation }) => {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, nickname, describeSelf]);
+  }, [navigation, nickname, describeSelf, profileImgPath]);
 
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
         <Image style={styles.img} source={{ uri: profileImgPath }} />
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleImagePicker}>
           <Text style={styles.changeButton}>사진 변경</Text>
         </TouchableOpacity>
       </View>

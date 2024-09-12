@@ -3,7 +3,6 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-nat
 import { StyleSheet, View, Text, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { login as kakaoLogin, getProfile as getKakaoProfile } from "@react-native-seoul/kakao-login";
-import { refreshToken as getNewAccessToken } from "./refreshToken";
 import NaverLogin from '@react-native-seoul/naver-login';
 
 // 네이버 로그인 설정
@@ -43,7 +42,6 @@ function Loginscreen({ navigation }) {
           ["birthyear", profile.birthyear || ""],
           ["birthday", profile.birthday || ""],
           ["gender", profile.gender || ""],
-          ["profileImgPath", profile.profileImageUrl || ""],
         ]);
         const email = encodeURIComponent(profile.email);
         const token = encodeURIComponent(result.accessToken);
@@ -74,14 +72,13 @@ function Loginscreen({ navigation }) {
           ]);
           navigation.navigate("MainContainer");
         } else {
-          Alert.alert("오류", `로그인 처리 중 문제가 발생했습니다: ${responseData.message}`);
+          Alert.alert("오류", `${responseData.message}`);
         }
       } else {
         throw new Error("Kakao login failed.");
       }
     } catch (err) {
-      console.error("Kakao 로그인 에러:", err);
-      Alert.alert("로그인 실패", "Kakao 로그인에 실패했습니다.");
+      // 에러 코드
     } finally {
       setKakaoLoading(false);
     }
@@ -103,7 +100,6 @@ function Loginscreen({ navigation }) {
           ["birthyear", profileResult.response.birthyear || ""],
           ["birthday", profileResult.response.birthday || ""],
           ["gender", profileResult.response.gender || ""],
-          ["profileImgPath", profileResult.response.profile_image || ""],
         ]);
 
         const email = encodeURIComponent(profileResult.response.email);
@@ -138,7 +134,7 @@ function Loginscreen({ navigation }) {
           ]);
           navigation.navigate("MainContainer");
         } else {
-          Alert.alert("오류", `로그인 처리 중 문제가 발생했습니다: ${responseData.message}`);
+          Alert.alert("오류", `${responseData.message}`);
         }
       } else {
         throw new Error("Naver login failed.");

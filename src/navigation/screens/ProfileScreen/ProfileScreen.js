@@ -22,15 +22,10 @@ const ProfileScreen = () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       let accessToken = await AsyncStorage.getItem('accessToken');
-      const storedProfileImg = await AsyncStorage.getItem('profileImgPath');
   
       if (!userId || !accessToken) {
         console.error("User ID or access token is missing.");
         return;
-      }
-  
-      if (storedProfileImg) {
-        setProfileImgPath(storedProfileImg);
       }
   
       let response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
@@ -56,7 +51,11 @@ const ProfileScreen = () => {
   
       if (response.ok) {
         const data = await response.json();
-        const { nickname, name, describeSelf, profileImgPath } = data.data;
+        const { profileId, nickname, name, describeSelf, profileImgPath } = data.data;
+        
+        AsyncStorage.setItem('profileId', JSON.stringify(profileId));
+        AsyncStorage.setItem('nickname', nickname);
+        AsyncStorage.setItem('describeSelf', describeSelf);
   
         setAccount(nickname || "닉네임 없음");
         setName(name || "이름 없음");

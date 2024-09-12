@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { launchImageLibrary } from 'react-native-image-picker';
 import { refreshToken } from "./refreshToken";
 
 function ProfileCreateScreen({ navigation }) {
@@ -23,7 +24,6 @@ function ProfileCreateScreen({ navigation }) {
         const storedBirthyear = await AsyncStorage.getItem("birthyear");
         const storedBirthday = await AsyncStorage.getItem("birthday");
         const storedGender = await AsyncStorage.getItem("gender");
-        const storedProfileImgPath = await AsyncStorage.getItem("profileImgPath");
         const storedNickname = await AsyncStorage.getItem("nickname");
         const storedDescribeSelf = await AsyncStorage.getItem("describeSelf");
 
@@ -32,9 +32,11 @@ function ProfileCreateScreen({ navigation }) {
         setAccount(storedAccount || "");
         setBirthyear(storedBirthyear || "");
         setBirthday(storedBirthday || "");
-        setGender(storedGender === "male" || storedGender === "M" ? "MALE" : 
-          storedGender === "female" || storedGender === "F" ? "FEMALE" : "");        
-        setProfileImgPath(storedProfileImgPath || "");
+        setGender(
+          storedGender === "male" || storedGender === "M" ? "MALE" : 
+          storedGender === "female" || storedGender === "F" ? "FEMALE" : ""
+        );        
+        setProfileImgPath("");
         setNickname(storedNickname || "");
         setdescribeSelf(storedDescribeSelf || "");
       } catch (error) {
@@ -45,27 +47,34 @@ function ProfileCreateScreen({ navigation }) {
     loadProfileData();
   }, []);
 
+  const handleImagePicker = () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
+      if (response.didCancel) {
+        console.log("사용자가 이미지 선택을 취소했습니다.");
+      } else if (response.errorCode) {
+        console.error("이미지 선택 오류:", response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        setProfileImgPath(response.assets[0].uri);
+      }
+    });
+  };
+
   const handleSubmit = async () => {
     if (!nickname || !describeSelf) {
       Alert.alert("오류", "입력란을 모두 채워주세요.");
       return;
     }
-
+  
     try {
       let accessToken = await AsyncStorage.getItem("accessToken");
       const userId = await AsyncStorage.getItem("userId");
-
+  
       if (!userId) {
         Alert.alert("오류", "로그인이 필요합니다.");
         navigation.navigate("Login");
         return;
       }
-
-      // nickname과 describeSelf를 AsyncStorage에 저장
-      await AsyncStorage.setItem("nickname", nickname);
-      await AsyncStorage.setItem("describeSelf", describeSelf);
-
-      // 프로필 데이터 정의
+  
       const profileData = {
         userId,
         name,
@@ -75,60 +84,106 @@ function ProfileCreateScreen({ navigation }) {
         gender,
         birthDate: formatDate(),
       };
-
-      // 액세스 토큰 만료 확인 및 갱신
-      let response = await fetch("https://tuituiworld.store:8443/api/profiles/without-image", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify(profileData),
-      });
-
-      if (response.status === 401) { // Unauthorized
-        const newAccessToken = await refreshToken();
-        if (newAccessToken) {
-          await AsyncStorage.setItem("accessToken", newAccessToken); // 갱신된 액세스 토큰 저장
-          accessToken = newAccessToken;
-          // 갱신된 액세스 토큰으로 다시 시도
-          response = await fetch("https://tuituiworld.store:8443/api/profiles/without-image", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify(profileData),
-          });
-        } else {
-          Alert.alert("오류", "액세스 토큰 갱신에 실패했습니다.");
-          return;
+  
+      // 프로필 이미지가 있는 경우
+      if (profileImgPath) {
+        const formData = new FormData();
+        formData.append("request", JSON.stringify(profileData));
+  
+        const cleanedImagePath = profileImgPath.startsWith("file://")
+          ? profileImgPath.replace("file://", "")
+          : profileImgPath;
+  
+        formData.append("file", {
+          uri: cleanedImagePath,
+          type: "image/jpeg",
+          name: "profile.jpg",
+        });
+  
+        let response = await fetchProfileWithImage(accessToken, formData);
+  
+        // 토큰 만료 시 갱신 처리
+        if (response.status === 401) {
+          const newAccessToken = await refreshToken();
+          if (newAccessToken) {
+            await AsyncStorage.setItem("accessToken", newAccessToken);
+            accessToken = newAccessToken;
+            response = await fetchProfileWithImage(accessToken, formData);
+          } else {
+            Alert.alert("오류", "액세스 토큰 갱신에 실패했습니다.");
+            return;
+          }
         }
-      }
-
-      if (response.ok) {
-        Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
-        navigation.navigate("MainContainer");
-      } else {
-        const errorResponse = await response.json();
-        console.error("프로필 생성 실패:", errorResponse);
-        Alert.alert("오류", errorResponse.message);
+  
+        const responseText = await response.text();
+  
+        if (response.ok) {
+          Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
+          navigation.navigate("MainContainer");
+        } else {
+          Alert.alert("오류", responseText);
+        }
+  
+      } else { 
+        // 프로필 이미지가 없는 경우
+        let response = await fetchProfileWithoutImage(accessToken, profileData);
+  
+        // 토큰 만료 시 갱신 처리
+        if (response.status === 401) {
+          const newAccessToken = await refreshToken();
+          if (newAccessToken) {
+            await AsyncStorage.setItem("accessToken", newAccessToken);
+            accessToken = newAccessToken;
+            response = await fetchProfileWithoutImage(accessToken, profileData);
+          } else {
+            Alert.alert("오류", "액세스 토큰 갱신에 실패했습니다.");
+            return;
+          }
+        }
+  
+        const responseText = await response.text();
+  
+        if (response.ok) {
+          Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
+          navigation.navigate("MainContainer");
+        } else {
+          Alert.alert("오류", responseText);
+        }
       }
     } catch (error) {
       console.error("오류", error);
       Alert.alert("오류", "프로필 생성 중 오류가 발생했습니다.");
     }
+  };  
+
+  const fetchProfileWithImage = async (accessToken, formData) => {
+    return fetch("https://tuituiworld.store:8443/api/profiles/with-image", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+      },
+      body: formData,
+    });
+  };
+
+  const fetchProfileWithoutImage = async (accessToken, profileData) => {
+    return fetch("https://tuituiworld.store:8443/api/profiles/without-image", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(profileData),
+    });
   };
 
   const formatDate = () => {
     if (birthyear && birthday) {
       if (birthday.length === 4) {
-        // mmdd 형식일 때 처리
         const month = birthday.slice(0, 2);
         const day = birthday.slice(2, 4);
         return `${birthyear}-${month}-${day}`;
       } else if (birthday.includes("-")) {
-        // mm-dd 형식일 때 처리
         const [month, day] = birthday.split("-");
         return `${birthyear}-${month}-${day}`;
       }
@@ -138,11 +193,13 @@ function ProfileCreateScreen({ navigation }) {
   
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {profileImgPath ? (
-        <Image source={{ uri: profileImgPath }} style={styles.profileImage} />
-      ) : (
-        <View style={styles.placeholderImage} />
-      )}
+      <TouchableOpacity onPress={handleImagePicker}>
+        {profileImgPath ? (
+          <Image source={{ uri: profileImgPath }} style={styles.profileImage} />
+        ) : (
+          <View style={styles.placeholderImage} />
+        )}
+      </TouchableOpacity>
 
       <View style={styles.infoGroup}>
         <Text style={styles.label}>이름</Text>
