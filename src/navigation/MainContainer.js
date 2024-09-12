@@ -193,12 +193,16 @@ const MainContainer = () => {
         component={HomeStackScreen}
         options={{ headerShown: false }}
       />
-      <Tab.Screen 
-        name={mapName} 
-        component={MapScreen} 
-        options={{ headerShown: false }
-        }/>
-      <Tab.Screen name={cameraName} component={CameraStackScreen} />
+      <Tab.Screen
+        name={mapName}
+        component={MapScreen}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name={cameraName}
+        component={CameraStackScreen}
+        options={{ headerShown: false }}
+      />
       <Tab.Screen name={alarmName} component={AlarmScreen} />
       <Tab.Screen name={chatName} component={ChatScreen} />
     </Tab.Navigator>
