@@ -87,8 +87,14 @@ const App = () => {
             headerBackTitleVisible: false,
           }}
         />
-        <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
-        <Stack.Screen name="ProfileFixScreen" component={ProfileFixScreen} />
+        <Stack.Screen 
+          name="ProfileScreen" 
+          component={ProfileScreen} 
+        />
+        <Stack.Screen 
+          name="ProfileFixScreen" 
+          component={ProfileFixScreen} 
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

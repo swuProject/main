@@ -22,7 +22,7 @@ const ProfileScreen = () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       let accessToken = await AsyncStorage.getItem('accessToken');
-  
+      
       if (!userId || !accessToken) {
         console.error("User ID or access token is missing.");
         return;

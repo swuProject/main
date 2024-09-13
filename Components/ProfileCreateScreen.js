@@ -48,7 +48,7 @@ function ProfileCreateScreen({ navigation }) {
   }, []);
 
   const handleImagePicker = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
+    launchImageLibrary({ mediaType: 'photo', quality: 0.5 }, (response) => {
       if (response.didCancel) {
         console.log("사용자가 이미지 선택을 취소했습니다.");
       } else if (response.errorCode) {
@@ -85,76 +85,60 @@ function ProfileCreateScreen({ navigation }) {
         birthDate: formatDate(),
       };
   
+      let response;
+  
       // 프로필 이미지가 있는 경우
       if (profileImgPath) {
         const formData = new FormData();
         formData.append("request", JSON.stringify(profileData));
-  
+        
         const cleanedImagePath = profileImgPath.startsWith("file://")
           ? profileImgPath.replace("file://", "")
           : profileImgPath;
-  
+        
         formData.append("file", {
           uri: cleanedImagePath,
           type: "image/jpeg",
           name: "profile.jpg",
         });
   
-        let response = await fetchProfileWithImage(accessToken, formData);
+        response = await fetchProfileWithImage(accessToken, formData);
+      } else {
+        response = await fetchProfileWithoutImage(accessToken, profileData);
+      }
   
-        // 토큰 만료 시 갱신 처리
-        if (response.status === 401) {
-          const newAccessToken = await refreshToken();
-          if (newAccessToken) {
-            await AsyncStorage.setItem("accessToken", newAccessToken);
-            accessToken = newAccessToken;
-            response = await fetchProfileWithImage(accessToken, formData);
-          } else {
-            Alert.alert("오류", "액세스 토큰 갱신에 실패했습니다.");
-            return;
-          }
-        }
-  
-        const responseText = await response.text();
-  
-        if (response.ok) {
-          Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
-          navigation.navigate("MainContainer");
+      // 토큰 만료 시 갱신 처리
+      if (response.status === 401) {
+        const newAccessToken = await refreshToken();
+        if (newAccessToken) {
+          await AsyncStorage.setItem("accessToken", newAccessToken);
+          accessToken = newAccessToken;
+          response = await fetchProfileWithImage(accessToken, formData);
         } else {
-          Alert.alert("오류", responseText);
-        }
-  
-      } else { 
-        // 프로필 이미지가 없는 경우
-        let response = await fetchProfileWithoutImage(accessToken, profileData);
-  
-        // 토큰 만료 시 갱신 처리
-        if (response.status === 401) {
-          const newAccessToken = await refreshToken();
-          if (newAccessToken) {
-            await AsyncStorage.setItem("accessToken", newAccessToken);
-            accessToken = newAccessToken;
-            response = await fetchProfileWithoutImage(accessToken, profileData);
-          } else {
-            Alert.alert("오류", "액세스 토큰 갱신에 실패했습니다.");
-            return;
-          }
-        }
-  
-        const responseText = await response.text();
-  
-        if (response.ok) {
-          Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
-          navigation.navigate("MainContainer");
-        } else {
-          Alert.alert("오류", responseText);
+          Alert.alert("오류", "액세스 토큰 갱신에 실패했습니다.");
+          return;
         }
       }
+  
+      const responseData = await response.json();
+  
+      if (response.ok) {
+        // profileId 저장
+        const profileId = responseData.data.profileId;
+        await AsyncStorage.setItem("profileId", profileId.toString());
+  
+        Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
+        navigation.navigate("MainContainer");
+      } else {
+        Alert.alert("오류", responseData.message || "프로필 생성 중 오류가 발생했습니다.");
+      }
+  
     } catch (error) {
       console.error("오류", error);
       Alert.alert("오류", "프로필 생성 중 오류가 발생했습니다.");
     }
-  };  
+  };
+  
 
   const fetchProfileWithImage = async (accessToken, formData) => {
     return fetch("https://tuituiworld.store:8443/api/profiles/with-image", {

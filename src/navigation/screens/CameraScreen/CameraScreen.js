@@ -39,12 +39,16 @@ const CameraStackScreen = () => {
         component={CameraScreen}
         options={{
           title: "Camera",
+          headerShown: false,
         }}
       />
       <CameraStack.Screen
         name="CameraActive"
         component={CameraActive}
-        options={{ title: "Camera Active" }}
+        options={{ 
+          title: "Camera Active",
+          headerShown: false,
+        }}
       />
       <CameraStack.Screen
         name="WritePage"
