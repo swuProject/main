@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 
 // 프로필 정보를 서버에 저장하는 함수 (닉네임과 자기소개만 전송)
-const saveUserProfile = async (userId, nickname, describeSelf, accessToken) => {
+const saveUserProfile = async (profileId, nickname, describeSelf, accessToken) => {
   try {
     const response = await fetch(`https://tuituiworld.store:8443/api/profiles`, {
       method: "PUT",
@@ -12,7 +12,7 @@ const saveUserProfile = async (userId, nickname, describeSelf, accessToken) => {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${accessToken}`,
       },
-      body: JSON.stringify({ userId, nickname, describeSelf }),
+      body: JSON.stringify({ profileId, nickname, describeSelf }),
     });
 
     if (!response.ok) {
@@ -64,78 +64,76 @@ const uploadProfileImage = async (accessToken, imageUri) => {
 };
 
 const ProfileFixScreen = ({ navigation }) => {
-  const [userId, setUserId] = useState("");
   const [realName, setRealName] = useState("");
   const [nickname, setNickname] = useState("");
   const [describeSelf, setDescribeSelf] = useState("");
   const [profileImgPath, setProfileImgPath] = useState(
     "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
   ); // 기본 프로필 URL
+  const [isImageChanged, setIsImageChanged] = useState(false); // 이미지 변경 상태 추가
 
   // 프로필 정보 가져오기
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const storedUserId = await AsyncStorage.getItem('userId');
         const storedName = await AsyncStorage.getItem('name');
         const storedNickname = await AsyncStorage.getItem('nickname');
         const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
         const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
 
-        if (storedUserId) setUserId(storedUserId);
         if (storedName) setRealName(storedName);
         if (storedNickname) setNickname(storedNickname);
         if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
         if (storedProfileImgPath) setProfileImgPath(storedProfileImgPath);
 
       } catch (error) {
-        console.log('Error fetching profile:', error);
+        console.log('프로필 정보 불러오기 오류:', error);
       }
     };
 
     fetchProfile();
   }, []);
 
-  const handleImagePicker = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 1 }, (response) => {
-      if (response.didCancel) {
-        console.log("이미지 선택 취소");
-      } else if (response.errorCode) {
-        console.error("이미지 선택 오류:", response.errorMessage);
-      } else if (response.assets && response.assets.length > 0) {
-        setProfileImgPath(response.assets[0].uri); // 선택한 이미지 경로를 상태에 저장
-      }
-    });
-  };
-
   const handleSaveProfile = async () => {
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
-      if (!accessToken) {
-        Alert.alert("오류", "액세스 토큰이 없습니다. 로그인 상태를 확인하세요.");
+      const profileId = await AsyncStorage.getItem('profileId');
+      if (!accessToken || !profileId) {
+        Alert.alert("오류", "액세스 토큰 또는 프로필 ID가 없습니다. 로그인 상태를 확인하세요.");
         return;
       }
-      if (userId === "") {
-        Alert.alert("오류", "유저 ID를 찾을 수 없습니다.");
-        return;
+  
+      // 이미지가 변경되었는지 확인
+      if (profileImgPath && profileImgPath !== "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png") {
+        const uploadResponse = await uploadProfileImage(accessToken, profileImgPath);
       }
-
-      // 이미지가 변경되었을 경우 업로드 처리
-      if (profileImgPath && !profileImgPath.includes('cloudfront.net')) {
-        await uploadProfileImage(accessToken, profileImgPath);
-      }
-
-      // 닉네임과 자기소개 저장
-      await saveUserProfile(userId, nickname, describeSelf, accessToken);
+  
+      // 닉네임이나 자기소개 저장
+      await saveUserProfile(profileId, nickname, describeSelf, accessToken);
+  
+      // 저장된 정보 AsyncStorage에 저장
       await AsyncStorage.setItem('nickname', nickname);
       await AsyncStorage.setItem('describeSelf', describeSelf);
       
       Alert.alert("성공", "프로필이 저장되었습니다.");
       navigation.goBack(); // 이전 화면으로 이동
     } catch (error) {
+      console.error("프로필 저장 오류:", error);
       Alert.alert("오류", error.message);
     }
-  };
+  };  
+  
+  const handleImagePicker = () => {
+    launchImageLibrary({ mediaType: 'photo', quality: 0.5 }, (response) => {
+      if (response.didCancel) {
+      } else if (response.errorCode) {
+        console.error("이미지 선택 오류:", response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        setProfileImgPath(response.assets[0].uri); // 선택한 이미지 경로를 상태에 저장
+        setIsImageChanged(true); // 이미지 변경 상태
+      }
+    });
+  };  
 
   useEffect(() => {
     navigation.setOptions({
