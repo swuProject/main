@@ -87,7 +87,7 @@ export default function WritePageScreen({ navigation }) {
 
       // request 키로 감싸서 데이터 추가
       const request = {
-        profileId: profileId,
+        profileId: await AsyncStorage.getItem("profileId"),
         content: text,
         location: "경기도 화성시 동탄지성로",
         remindDate: daysLater,

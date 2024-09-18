@@ -16,14 +16,52 @@ import {
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const base_url = "https://tuituiworld.store:8443";
+
+const getAuthToken = async () => {
+  try {
+    const token = await AsyncStorage.getItem("accessToken"); // 저장된 토큰 키 확인
+    if (token !== null) {
+      return token;
+    } else {
+      console.error("No token found in AsyncStorage");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error retrieving token:", error);
+    return null;
+  }
+};
+
 // page와 limit 사용해서 데이터 타임캡슐 데이터 가져옴.
 const GetCapsule = async (page, limit) => {
   try {
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+    console.log("JWT Token:", token); // 토큰 값 확인
+
+    console.log(`Fetching capsules for page: ${page}, limit: ${limit}`);
+
     const response = await fetch(
-      `http://13.124.69.147:8080/api/capsules/test?page=${page}&limit=${limit}`
+      `${base_url}/api/capsules?pageNo=${page}&pageSize=${limit}&sortBy=writeAt`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+        },
+      }
     );
+
     const result = await response.json();
-    return result.data;
+    console.log("API Response:", result); // API 응답 확인
+
+    // 서버에서 올바른 응답을 받았는지 확인하고 데이터 반환
+    if (result.status === "OK" && result.data) {
+      console.log("Response contents:", result.data.contents); // contents 배열 로그
+      return result.data.contents; // contents 배열 반환
+    } else {
+      console.error("Invalid response format or status:", result);
+      return [];
+    }
   } catch (error) {
     console.error("Error fetching capsules:", error);
     return [];
@@ -32,86 +70,157 @@ const GetCapsule = async (page, limit) => {
 
 const GetProfileImgPath = async () => {
   try {
-    const response = await fetch("http://13.124.69.147:8080/api/profiles");
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+    const response = await fetch(`${base_url}/api/profiles`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+      },
+    });
+
     const result = await response.json();
-    return result.data;
+    console.log("API Response:", result); // 응답 데이터 로그로 출력
+
+    // 응답이 성공이고, data가 배열이면 처리
+    if (
+      result.status === "OK" &&
+      Array.isArray(result.data) &&
+      result.data.length > 0
+    ) {
+      return result.data[0].profileImgPath; // 첫 번째 프로필의 이미지 경로 반환
+    } else {
+      console.error("Invalid response format or empty data:", result);
+      return null; // 적절한 처리
+    }
   } catch (error) {
     console.error("Error fetching profile image paths:", error);
-    return [];
+    return null; // 에러 시 null 반환
   }
 };
 
-const GetVisitCount = async (capsuleId) => {
-  try {
-    const response = await fetch(
-      `http://13.124.69.147:8080/api/capsules/${capsuleId}/visits`
-    );
-    const result = await response.json();
-    return result.data.visitCount;
-  } catch (error) {
-    console.error("Error fetching visit count:", error);
-    return 0;
-  }
-};
+// 조회수
+// const GetVisitCount = async (capsuleId) => {
+//   try {
+//     const token = await getAuthToken(); // JWT 토큰 가져오기
+//     const response = await fetch(
+//       `${base_url}/api/capsules/${capsuleId}/visits`,
+//       {
+//         method: "GET",
+//         headers: {
+//           Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+//         },
+//       }
+//     );
 
-const GetCommentCount = async (capsuleId) => {
-  try {
-    const response = await fetch(
-      `http://13.124.69.147:8080/api/capsules/${capsuleId}/comments`
-    );
-    const result = await response.json();
-    return result.data.length;
-  } catch (error) {
-    return 0;
-  }
-};
+//     const result = await response.json();
+//     console.log("API Response:", result); // 응답 데이터 로그로 출력
 
-const GetLikeCount = async (capsuleId) => {
-  try {
-    const response = await fetch(
-      `http://13.124.69.147:8080/api/capsules/${capsuleId}/likes`
-    );
-    const result = await response.json();
-    return result.data.length;
-  } catch (error) {
-    return 0;
-  }
-};
+//     // 응답 상태와 데이터 유효성 검사
+//     if (
+//       result.status === "OK" &&
+//       result.data &&
+//       typeof result.data.visitCount === "number"
+//     ) {
+//       return result.data.visitCount;
+//     } else {
+//       console.error("Invalid response format:", result);
+//       return 0; // 유효하지 않은 경우 기본값 0 반환
+//     }
+//   } catch (error) {
+//     console.error("Error fetching visit count:", error);
+//     return 0; // 에러 발생 시 기본값 0 반환
+//   }
+// };
 
 // 좋아요 저장
 const SaveLike = async (profileId, timeCapsuleId) => {
   try {
-    const response = await fetch(
-      "http://13.124.69.147:8080/api/capsules/likes",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ profileId, timeCapsuleId }),
-      }
-    );
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+    const response = await fetch(`${base_url}/api/capsules/likes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+      },
+      body: JSON.stringify({ profileId, timeCapsuleId }),
+    });
+
     const data = await response.json();
-    console.log("SaveLike result:", data);
-    return data;
+    console.log("SaveLike result:", data); // 결과 출력
+
+    // 응답 상태와 데이터 유효성 검사
+    if (data.status === "OK" && Array.isArray(data.data)) {
+      return data.data; // 성공 시 좋아요 데이터를 반환
+    } else {
+      console.error("Invalid response format:", data);
+      return null; // 유효하지 않은 경우 null 반환
+    }
   } catch (error) {
     console.error("Error saving like:", error);
-    return null;
+    return null; // 에러 발생 시 null 반환
+  }
+};
+
+// 좋아요 삭제 함수
+
+// 좋아요 숫자 받아오는 함수
+const GetLikeCount = async (capsuleId) => {
+  try {
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+
+    const response = await fetch(
+      `https://tuituiworld.store:8443/api/capsules/${capsuleId}/likes`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+        },
+      }
+    );
+
+    const result = await response.json();
+    console.log("API Response:", result); // 응답 데이터 로그로 출력
+
+    // 응답이 성공이고, data가 배열이면 길이를 반환
+    if (result.status === "OK" && Array.isArray(result.data)) {
+      return result.data.length; // 좋아요를 누른 유저 수 반환
+    } else {
+      console.error("Invalid response format or empty data:", result);
+      return 0; // 적절한 처리
+    }
+  } catch (error) {
+    console.error("Error fetching like count:", error);
+    return 0; // 에러 시 0 반환
   }
 };
 
 // 해당하는 capsuleId 댓글을 가져옴.
 const GetComments = async (capsuleId) => {
   try {
+    const token = await getAuthToken(); // JWT 토큰 가져오기
     const response = await fetch(
-      `http://13.124.69.147:8080/api/capsules/${capsuleId}/comments`
+      `${base_url}/api/capsules/${capsuleId}/comments`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+        },
+      }
     );
+
     const result = await response.json();
-    console.log("Fetched comments:", result.data); // 디버깅용 로그
-    return result.data;
+    console.log("Fetched comments:", result); // 디버깅용 로그
+
+    // 응답 데이터의 유효성 검사
+    if (result.status === "OK" && Array.isArray(result.data)) {
+      return result.data; // 유효한 데이터 반환
+    } else {
+      console.error("Invalid response format:", result);
+      return []; // 유효하지 않은 경우 빈 배열 반환
+    }
   } catch (error) {
     console.error("Error fetching comments:", error);
-    return [];
+    return []; // 에러 발생 시 빈 배열 반환
   }
 };
 
@@ -120,29 +229,37 @@ const SaveComment = async (
   profileId,
   capsuleId,
   comment,
-  refCommentId = null
+  parentCommentId = null // refCommentId -> parentCommentId로 수정
 ) => {
   try {
-    const response = await fetch(
-      `http://13.124.69.147:8080/api/capsules/comments`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          profileId,
-          comment,
-          timeCapsuleId: capsuleId,
-          refCommentId,
-        }),
-      }
-    );
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+    const response = await fetch(`${base_url}/api/capsules/comments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+      },
+      body: JSON.stringify({
+        profileId,
+        comment,
+        timeCapsuleId: capsuleId,
+        parentCommentId, // refCommentId 대신 parentCommentId로 사용
+      }),
+    });
+
     const result = await response.json();
-    return result.data;
+    console.log("Saved comment result:", result); // 디버깅용 로그
+
+    // 응답 상태 확인 및 데이터 반환
+    if (result.status === "OK") {
+      return result.data; // 성공적인 응답 데이터 반환
+    } else {
+      console.error("Error in response:", result.message);
+      return null;
+    }
   } catch (error) {
     console.error("Error saving comment:", error);
-    return null;
+    return null; // 에러 발생 시 null 반환
   }
 };
 
@@ -292,7 +409,7 @@ const Item = ({
           <Text style={styles.likeCount}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.visitCount}>조회수: {visitCount}</Text>
+      {/* <Text style={styles.visitCount}>조회수: {visitCount}</Text> */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -330,7 +447,7 @@ const Item = ({
 
 const HomeScreen = () => {
   const [data, setData] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   const [likedCapsules, setLikedCapsules] = useState([]); // 좋아요 데이터 상태 추가
@@ -340,15 +457,13 @@ const HomeScreen = () => {
     setLoading(true);
     try {
       const capsuleResult = await GetCapsule(page, 10);
-      const profileResult = await GetProfileImgPath();
+      const profileResult = await GetProfileImgPath(); // 여기서 단일 이미지 경로를 가져옵니다.
 
       const mergedData = capsuleResult.map((capsule) => {
-        const profile = profileResult.find(
-          (profile) => profile.nickname === capsule.writeUser
-        );
+        // profileResult는 이제 단일 이미지 경로입니다.
         return {
           ...capsule,
-          profileImgPath: profile ? profile.profileImgPath : null,
+          profileImgPath: profileResult, // 단일 이미지 경로를 할당
           initialLiked: likedCapsules.includes(capsule.capsuleId),
         };
       });
@@ -369,11 +484,20 @@ const HomeScreen = () => {
   // 상태
   useEffect(() => {
     const fetchInitialData = async () => {
+      console.log("Fetching initial data");
+
       try {
+        // AsyncStorage에서 profileId 가져오기
         const profileId = await AsyncStorage.getItem("profileId");
+
+        console.log("Profile ID:", profileId);
+
         if (profileId) {
-          // Fetch capsules only after liked capsules are set
+          // profileId가 있으면 fetchData 호출
           await fetchData();
+        } else {
+          // profileId가 없을 때
+          console.error("Profile ID not found in AsyncStorage");
         }
       } catch (error) {
         console.error("Error fetching initial data:", error);
@@ -414,6 +538,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginTop: StatusBar.currentHeight || 0,
+    backgroundColor: "white",
   },
   item: {
     backgroundColor: "white",
