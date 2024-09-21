@@ -12,6 +12,7 @@ import {
   Modal,
   Button,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -85,8 +86,10 @@ const GetProfileImgPath = async () => {
     if (
       result.status === "OK" &&
       Array.isArray(result.data) &&
-      result.data.length > 0
+      result.data.length > 0 &&
+      result.data[0].profileImgPath // 경로 유효성 체크
     ) {
+      console.log("Profile image path:", result.data[0].profileImgPath); // 프로필 이미지 경로 로그
       return result.data[0].profileImgPath; // 첫 번째 프로필의 이미지 경로 반환
     } else {
       console.error("Invalid response format or empty data:", result);
@@ -287,7 +290,7 @@ const CommentItem = ({ comment, nickname, profileImgPath }) => {
 // Item 컴포넌트
 const Item = ({
   capsuleId,
-  writeUser,
+  nickname,
   content,
   imageList,
   profileImgPath,
@@ -366,7 +369,7 @@ const Item = ({
         ) : (
           <Text>프로필 이미지 없음</Text>
         )}
-        <Text style={styles.title}>{writeUser}</Text>
+        <Text style={styles.title}>{nickname}</Text>
       </View>
       {imageUrl ? (
         <Image style={styles.image} source={{ uri: imageUrl }} />
@@ -451,24 +454,32 @@ const HomeScreen = () => {
   const [loading, setLoading] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   const [likedCapsules, setLikedCapsules] = useState([]); // 좋아요 데이터 상태 추가
+  const [refreshing, setRefreshing] = useState(false); // 새로고침 상태 추가
 
   const fetchData = async () => {
     if (loading || !hasMoreData) return;
     setLoading(true);
     try {
       const capsuleResult = await GetCapsule(page, 10);
-      const profileResult = await GetProfileImgPath(); // 여기서 단일 이미지 경로를 가져옵니다.
+      const profileResult = await GetProfileImgPath();
 
-      const mergedData = capsuleResult.map((capsule) => {
-        // profileResult는 이제 단일 이미지 경로입니다.
-        return {
-          ...capsule,
-          profileImgPath: profileResult, // 단일 이미지 경로를 할당
-          initialLiked: likedCapsules.includes(capsule.capsuleId),
-        };
-      });
+      const newData = capsuleResult.map((capsule) => ({
+        ...capsule,
+        profileImgPath: profileResult,
+        initialLiked: likedCapsules.includes(capsule.capsuleId),
+      }));
 
-      setData((prevData) => [...prevData, ...mergedData]);
+      // 기존 데이터와 중복되지 않는 새로운 데이터만 추가
+      const uniqueData = newData.filter(
+        (newCapsule) =>
+          !data.some(
+            (existingCapsule) =>
+              existingCapsule.capsuleId === newCapsule.capsuleId
+          )
+      );
+
+      // 상태 업데이트
+      setData((prevData) => [...prevData, ...uniqueData]);
       setPage((prevPage) => prevPage + 1);
       setLoading(false);
 
@@ -481,36 +492,51 @@ const HomeScreen = () => {
     }
   };
 
-  // 상태
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    setPage(0); // 페이지를 0으로 리셋하여 처음부터 다시 로드
+    setHasMoreData(true); // 더 많은 데이터가 있다고 가정
+    try {
+      const capsuleResult = await GetCapsule(0, 10); // 처음 페이지 데이터를 가져옴
+      const profileResult = await GetProfileImgPath();
+
+      const mergedData = capsuleResult.map((capsule) => {
+        return {
+          ...capsule,
+          profileImgPath: profileResult,
+          initialLiked: likedCapsules.includes(capsule.capsuleId),
+        };
+      });
+
+      setData(mergedData); // 데이터 리셋
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    }
+    setRefreshing(false);
+  };
+
   useEffect(() => {
     const fetchInitialData = async () => {
       console.log("Fetching initial data");
-
       try {
-        // AsyncStorage에서 profileId 가져오기
         const profileId = await AsyncStorage.getItem("profileId");
-
         console.log("Profile ID:", profileId);
-
         if (profileId) {
-          // profileId가 있으면 fetchData 호출
           await fetchData();
         } else {
-          // profileId가 없을 때
           console.error("Profile ID not found in AsyncStorage");
         }
       } catch (error) {
         console.error("Error fetching initial data:", error);
       }
     };
-
     fetchInitialData();
   }, []);
 
   const renderItem = ({ item }) => (
     <Item
       capsuleId={item.capsuleId}
-      writeUser={item.writeUser}
+      nickname={item.nickname}
       content={item.content}
       imageList={item.imageList}
       profileImgPath={item.profileImgPath}
@@ -528,6 +554,12 @@ const HomeScreen = () => {
         onEndReachedThreshold={0.5}
         ListFooterComponent={
           loading && <ActivityIndicator size="large" color="#0000ff" />
+        }
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh} // 새로고침 핸들러
+          />
         }
       />
     </SafeAreaView>
