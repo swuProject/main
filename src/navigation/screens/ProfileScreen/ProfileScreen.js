@@ -13,8 +13,39 @@ const ProfileScreen = () => {
   const [describeSelf, setDescribeSelf] = useState("");
   const [profileImgPath, setProfileImgPath] = useState(defaultImg);
   const [loading, setLoading] = useState(true);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+
+  const [isFollowing, setIsFollowing] = useState(false); // 팔로우 상태
 
   const navigation = useNavigation();
+
+  const fetchFollowData = async (profileId, accessToken) => {
+    try {
+      const response = await fetch(`${base_url}/api/profiles/follows/${profileId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        const { followerList, followingList } = data.data;
+  
+        setFollowerCount(followerList ? followerList.length : 0);
+        setFollowingCount(followingList ? followingList.length : 0);
+
+        const currentUserProfileId = await AsyncStorage.getItem('profileId');
+        const isFollowingStatus = followerList.some(follow => follow.profileId === parseInt(currentUserProfileId, 10));
+        setIsFollowing(isFollowingStatus);
+    
+      } 
+    } catch (error) {
+      console.error('팔로워/팔로잉 데이터 가져오기 오류:', error);
+    }
+  };
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -24,10 +55,11 @@ const ProfileScreen = () => {
       let accessToken = await AsyncStorage.getItem('accessToken');
       
       if (!userId || !accessToken) {
-        console.error("User ID or access token is missing.");
+        console.error("User ID 또는 access token이 누락되었습니다.");
         return;
       }
-  
+
+      // 프로필 정보 가져오기
       let response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
         method: 'GET',
         headers: {
@@ -35,7 +67,8 @@ const ProfileScreen = () => {
           'Content-Type': 'application/json',
         },
       });
-  
+
+      // 토큰 갱신 필요 시
       if (response.status === 401) {
         accessToken = await refreshToken();
         if (accessToken) {
@@ -48,35 +81,47 @@ const ProfileScreen = () => {
           });
         }
       }
-  
+
       if (response.ok) {
         const data = await response.json();
         const { profileId, nickname, name, describeSelf, profileImgPath } = data.data;
-        
-        AsyncStorage.setItem('profileId', JSON.stringify(profileId));
-        AsyncStorage.setItem('nickname', nickname);
-        AsyncStorage.setItem('describeSelf', describeSelf);
-  
+
+        // AsyncStorage에 프로필 정보 저장
+        await AsyncStorage.setItem('profileId', JSON.stringify(profileId));
+        await AsyncStorage.setItem('nickname', nickname);
+        await AsyncStorage.setItem('describeSelf', describeSelf);
+
+        // 상태 업데이트
         setAccount(nickname || "닉네임 없음");
         setName(name || "이름 없음");
         setDescribeSelf(describeSelf || "");
-  
+
+        // 프로필 이미지 설정
         if (profileImgPath) {
-          fetch(profileImgPath, { method: 'HEAD' })
-            .then(res => res.ok ? setProfileImgPath(profileImgPath) : setProfileImgPath(defaultImg))
-            .catch(() => setProfileImgPath(defaultImg));
-          AsyncStorage.setItem('profileImgPath', profileImgPath);
+          try {
+            const imgResponse = await fetch(profileImgPath, { method: 'HEAD' });
+            if (imgResponse.ok) {
+              setProfileImgPath(profileImgPath);
+            } else {
+              setProfileImgPath(defaultImg);
+            }
+          } catch {
+            setProfileImgPath(defaultImg);
+          }
+          await AsyncStorage.setItem('profileImgPath', profileImgPath);
         }
+
+        // 팔로워 및 팔로잉 수 설정
+        await fetchFollowData(profileId, accessToken);
       } else {
-        console.error("Failed to fetch profile information:", response.status);
+        console.error("프로필 정보를 가져오는데 실패했습니다:", response.status);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('프로필 가져오기 오류:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
-  
+  }, []);  
 
   useFocusEffect(
     useCallback(() => {
@@ -108,11 +153,11 @@ const ProfileScreen = () => {
                 <Text style={styles.statLabel}>게시글</Text>
               </View>
               <View style={styles.stat}>
-                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statNumber}>{followerCount}</Text>
                 <Text style={styles.statLabel}>팔로워</Text>
               </View>
               <View style={styles.stat}>
-                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statNumber}>{followingCount}</Text>
                 <Text style={styles.statLabel}>팔로잉</Text>
               </View>
             </View>

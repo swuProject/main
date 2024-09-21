@@ -16,7 +16,7 @@ import MapScreen from "./screens/MapScreen";
 import CameraScreen from "./screens/CameraScreen/CameraScreen";
 import CameraActive from "./screens/CameraScreen/CameraActive";
 import AlarmScreen from "./screens/AlarmScreen";
-import ChatScreen from "./screens/ChatScreen";
+import FindScreen from "./screens/FindScreen";
 import ProfileScreen from "./screens/ProfileScreen/ProfileScreen";
 import ProfileOptionScreen from "./screens/ProfileScreen/PrifileOptionScreen";
 import ProfileFixScreen from "./screens/ProfileScreen/PrifileFixScreen";
@@ -28,7 +28,7 @@ const homeName = "home";
 const mapName = "Map";
 const cameraName = "Camera";
 const alarmName = "Alarm";
-const chatName = "Chat";
+const findName = "Find";
 
 // navigatorStack
 const Tab = createBottomTabNavigator();
@@ -36,26 +36,10 @@ const HomeStack = createStackNavigator();
 const MapStack = createStackNavigator();
 const CameraStack = createStackNavigator();
 const AlramStack = createStackNavigator();
-const ChatStack = createStackNavigator();
+const FindStack = createStackNavigator();
 
 // 홈 스택화면 (프로필 화면)
 const HomeStackScreen = ({ navigation }) => {
-  const [nickname, setNickname] = useState("");
-
-  useEffect(() => {
-    const fetchNickname = async () => {
-      try {
-        const storedNickname = await AsyncStorage.getItem("nickname");
-        if (storedNickname) {
-          setNickname(storedNickname);
-        }
-      } catch (error) {
-        console.error("닉네임 불러오기 오류:", error);
-      }
-    };
-    fetchNickname();
-  }, []);
-
   const goToProfile = () => {
     navigation.navigate("Profile");
   };
@@ -175,13 +159,9 @@ const MainContainer = () => {
           } else if (rn === cameraName) {
             iconName = focused ? "camera-outline" : "camera-outline";
           } else if (rn === alarmName) {
-            iconName = focused
-              ? "notifications-outline"
-              : "notifications-outline";
-          } else if (rn === chatName) {
-            iconName = focused
-              ? "chatbox-ellipses-outline"
-              : "chatbox-ellipses-outline";
+            iconName = focused ? "notifications-outline" : "notifications-outline";
+          } else if (rn === findName) {
+            iconName = focused ? "search-outline" : "search-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -204,7 +184,11 @@ const MainContainer = () => {
         options={{ headerShown: false }}
       />
       <Tab.Screen name={alarmName} component={AlarmScreen} />
-      <Tab.Screen name={chatName} component={ChatScreen} />
+      <Tab.Screen 
+        name={findName} 
+        component={FindScreen} 
+        options={{ headerShown: false }}
+      />
     </Tab.Navigator>
   );
 };
@@ -219,11 +203,6 @@ const styles = StyleSheet.create({
     fontSize: 32,
     marginLeft: 16,
     letterSpacing: 8,
-  },
-  nickname: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "black",
   },
   iconButton: {
     marginLeft: 15,

@@ -12,9 +12,11 @@ import LogoutScreen from "./Components/LogoutScreen";
 import DeleteUserScreen from "./Components/DeleteUserScreen";
 
 import MainContainer from "./src/navigation/MainContainer";
+import FindScreen from "./src/navigation/screens/FindScreen";
 import ProfileOptionScreen from "./src/navigation/screens/ProfileScreen/PrifileOptionScreen";
 import ProfileScreen from "./src/navigation/screens/ProfileScreen/ProfileScreen";
 import ProfileFixScreen from "./src/navigation/screens/ProfileScreen/PrifileFixScreen";
+import ProfileinfoScreen from "./src/navigation/screens/ProfileScreen/ProfileinfoScreen";
 
 const Stack = createStackNavigator();
 
@@ -42,10 +44,31 @@ const App = () => {
           component={MainContainer}
           options={{ headerShown: false, gestureEnabled: false, }}
         />
+         <Stack.Screen
+          name="Find"
+          component={FindScreen}
+          options={{ headerShown: false, gestureEnabled: false, }}
+        />
         <Stack.Screen
           name="ProfileOptions"
           component={ProfileOptionScreen}
           options={{ title: "설정", }}
+        />
+        <Stack.Screen
+          name="Profileinfo"
+          component={ProfileinfoScreen}
+          options={{ 
+            title: "",
+            headerBackTitleVisible: false,
+            headerBackImage: () => (
+              <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
+                style={{ paddingLeft: 10 }}
+              />
+            ),  
+          }}
         />
         <Stack.Screen
           name="DeleteUser"
