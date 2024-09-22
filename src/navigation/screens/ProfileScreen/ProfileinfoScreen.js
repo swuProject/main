@@ -7,10 +7,11 @@ export default function ProfileinfoScreen({ route }) {
   const { nickname } = route.params;
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(null); // 초기값 null
   const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
   const navigation = useNavigation();
-  
+
   const SERVER_URL = "https://tuituiworld.store:8443/api/profiles/nicknames/";
 
   const fetchUser = async () => {
@@ -19,7 +20,6 @@ export default function ProfileinfoScreen({ route }) {
       const accessToken = await AsyncStorage.getItem("accessToken");
       if (!accessToken) {
         Alert.alert("오류", "액세스 토큰이 없습니다");
-        setLoading(false);
         return;
       }
 
@@ -31,19 +31,14 @@ export default function ProfileinfoScreen({ route }) {
         },
       });
 
-      if (response.status === 200) {
+      if (response.ok) {
         const data = await response.json();
         setUser(data.data);
         navigation.setOptions({
           headerTitle: data.data.nickname || "닉네임 없음",
         });
-        
-        // 팔로워 수를 설정
-        const followerCount = data.data.followerList ? data.data.followerList.length : 0;
-        setFollowerCount(followerCount); // 팔로워 수 상태 설정
-        
-        checkFollowingStatus(data.data.profileId);
-      }else if (response.status === 404) {
+        await checkFollowingStatus(data.data.profileId);
+      } else if (response.status === 404) {
         Alert.alert("오류", "해당 유저를 찾을 수 없습니다.");
       } else {
         Alert.alert("오류", "알 수 없는 오류가 발생했습니다.");
@@ -56,33 +51,38 @@ export default function ProfileinfoScreen({ route }) {
     }
   };
 
-  const checkFollowingStatus = async (followingId) => {
-    const accessToken = await AsyncStorage.getItem("accessToken");
-    const profileId = await AsyncStorage.getItem("profileId");
-  
-    const response = await fetch(`https://tuituiworld.store:8443/api/profiles/follows/${profileId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-  
-    const data = await response.json();
-    if (response.ok) {
-      const followerList = data.data.followerList || [];
-      const isCurrentlyFollowing = followerList.some(follow => follow.profileId === followingId);
-      setIsFollowing(isCurrentlyFollowing);
-  
-      // 팔로워 수 업데이트
-      setFollowerCount(data.data.followerList.length); 
+  const checkFollowingStatus = async (followerId) => {
+    try {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      const currentUserId = await AsyncStorage.getItem("profileId");
+
+      const response = await fetch(`https://tuituiworld.store:8443/api/profiles/follows/${followerId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const { followerList, followingList } = data.data;
+
+        setFollowerCount(followerList ? followerList.length : 0);
+        setFollowingCount(followingList ? followingList.length : 0);
+
+        const isCurrentlyFollowing = followerList && followerList.some(user => user.profileId === Number(currentUserId));
+        setIsFollowing(isCurrentlyFollowing); // 팔로우 하고 있는지 저장
+      }
+    } catch (error) {
+      console.error('팔로워/팔로잉 데이터 가져오기 오류:', error);
     }
   };
 
   const followUser = async () => {
     const accessToken = await AsyncStorage.getItem("accessToken");
-    const followerId = await AsyncStorage.getItem("profileId");
-    const followingId = user.profileId;
-  
+    const followerId = user.profileId; // 팔로우 당하는 사람
+    const followingId = await AsyncStorage.getItem("profileId"); // 팔로우 하는 사람
+
     const response = await fetch(`https://tuituiworld.store:8443/api/profiles/follows`, {
       method: "POST",
       headers: {
@@ -91,28 +91,21 @@ export default function ProfileinfoScreen({ route }) {
       },
       body: JSON.stringify({ followerId, followingId }),
     });
-  
-    const data = await response.json();
-    console.log("팔로우 응답 데이터:", data);
-  
+
     if (response.ok) {
       setIsFollowing(true);
-      setFollowerCount(followerCount + 1);
-      // 팔로워 목록 다시 가져오기
-      await fetchFollowData(followingId, accessToken); // 팔로워 목록을 갱신
+      setFollowerCount(prev => prev + 1); // 이전 값 기반으로 업데이트
     } else {
-      Alert.alert("오류", data.message || "팔로우에 실패했습니다.");
+      const data = await response.json();
+      Alert.alert("오류", data.message);
     }
-  
-    // 팔로우 상태 재확인
-    checkFollowingStatus(followingId);
-  };  
-  
+  };
+
   const unfollowUser = async () => {
     const accessToken = await AsyncStorage.getItem("accessToken");
-    const followerId = await AsyncStorage.getItem("profileId");
-    const followingId = user.profileId;
-  
+    const followerId = user.profileId; // 팔로우 당하는 사람
+    const followingId = await AsyncStorage.getItem("profileId"); // 팔로우 받는 사람
+
     const response = await fetch(`https://tuituiworld.store:8443/api/profiles/follows`, {
       method: "DELETE",
       headers: {
@@ -121,22 +114,25 @@ export default function ProfileinfoScreen({ route }) {
       },
       body: JSON.stringify({ followerId, followingId }),
     });
-  
-    const data = await response.json(); // 응답 데이터를 확인
-    console.log("언팔로우 응답 데이터:", data);
-  
+
     if (response.ok) {
       setIsFollowing(false);
-      setFollowerCount(followerCount - 1); // 팔로워 수 감소
-      checkFollowingStatus(followingId);
+      setFollowerCount(prev => prev - 1); // 이전 값 기반으로 업데이트
     } else {
-      Alert.alert("오류", "언팔로우에 실패했습니다.");
+      const data = await response.json();
+      Alert.alert("오류", data.message);
     }
-  };  
-  
+  };
+
   useEffect(() => {
     fetchUser();
   }, [nickname]);
+
+  useEffect(() => {
+    if (user) {
+      checkFollowingStatus(user.profileId);
+    }
+  }, [user]);
 
   if (loading) {
     return (
@@ -171,7 +167,7 @@ export default function ProfileinfoScreen({ route }) {
             <Text style={styles.statLabel}>팔로워</Text>
           </View>
           <View style={styles.stat}>
-            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statNumber}>{followingCount}</Text>
             <Text style={styles.statLabel}>팔로잉</Text>
           </View>
         </View>

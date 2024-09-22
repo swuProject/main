@@ -16,11 +16,10 @@ const ProfileScreen = () => {
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
 
-  const [isFollowing, setIsFollowing] = useState(false); // 팔로우 상태
-
   const navigation = useNavigation();
 
   const fetchFollowData = async (profileId, accessToken) => {
+    console.log(profileId);
     try {
       const response = await fetch(`${base_url}/api/profiles/follows/${profileId}`, {
         method: 'GET',
@@ -33,13 +32,11 @@ const ProfileScreen = () => {
       if (response.ok) {
         const data = await response.json();
         const { followerList, followingList } = data.data;
+
+        console.log(data.data);
   
         setFollowerCount(followerList ? followerList.length : 0);
         setFollowingCount(followingList ? followingList.length : 0);
-
-        const currentUserProfileId = await AsyncStorage.getItem('profileId');
-        const isFollowingStatus = followerList.some(follow => follow.profileId === parseInt(currentUserProfileId, 10));
-        setIsFollowing(isFollowingStatus);
     
       } 
     } catch (error) {
