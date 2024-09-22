@@ -69,10 +69,11 @@ const GetCapsule = async (page, limit) => {
   }
 };
 
-const GetProfileImgPath = async () => {
+// 캡슐을 작성한 유저의 프로필 이미지를 가져오는 함수
+const GetProfileImgPath = async (capsuleId) => {
   try {
     const token = await getAuthToken(); // JWT 토큰 가져오기
-    const response = await fetch(`${base_url}/api/profiles`, {
+    const response = await fetch(`${base_url}/api/capsules/${capsuleId}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
@@ -82,21 +83,19 @@ const GetProfileImgPath = async () => {
     const result = await response.json();
     console.log("API Response:", result); // 응답 데이터 로그로 출력
 
-    // 응답이 성공이고, data가 배열이면 처리
-    if (
-      result.status === "OK" &&
-      Array.isArray(result.data) &&
-      result.data.length > 0 &&
-      result.data[0].profileImgPath // 경로 유효성 체크
-    ) {
-      console.log("Profile image path:", result.data[0].profileImgPath); // 프로필 이미지 경로 로그
-      return result.data[0].profileImgPath; // 첫 번째 프로필의 이미지 경로 반환
+    // 응답이 성공이고, 프로필 이미지 경로가 있는지 확인
+    if (result.status === "OK" && result.data && result.data.profileImgPath) {
+      console.log("Profile image path:", result.data.profileImgPath); // 프로필 이미지 경로 로그
+      return result.data.profileImgPath; // 프로필 이미지 경로 반환
     } else {
-      console.error("Invalid response format or empty data:", result);
-      return null; // 적절한 처리
+      console.error(
+        "Invalid response format or missing profileImgPath:",
+        result
+      );
+      return null; // 프로필 이미지 경로가 없을 경우 null 반환
     }
   } catch (error) {
-    console.error("Error fetching profile image paths:", error);
+    console.error("Error fetching profile image path:", error);
     return null; // 에러 시 null 반환
   }
 };
@@ -197,6 +196,36 @@ const GetLikeCount = async (capsuleId) => {
   }
 };
 
+// 댓글 숫자 받아오는 함수
+const GetCommentCount = async (capsuleId) => {
+  try {
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+
+    const response = await fetch(
+      `https://tuituiworld.store:8443/api/capsules/${capsuleId}/comments`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+        },
+      }
+    );
+
+    const result = await response.json();
+    console.log("API Response:", result); // 응답 데이터 로그로 출력
+
+    // 응답이 성공이고, data가 배열이면 길이를 반환
+    if (result.status === "OK" && Array.isArray(result.data)) {
+      return result.data.length; // 작성한 댓글의 수
+    } else {
+      return 0; // 적절한 처리
+    }
+  } catch (error) {
+    console.error("Error fetching like count:", error);
+    return 0; // 에러 시 0 반환
+  }
+};
+
 // 해당하는 capsuleId 댓글을 가져옴.
 const GetComments = async (capsuleId) => {
   try {
@@ -218,7 +247,6 @@ const GetComments = async (capsuleId) => {
     if (result.status === "OK" && Array.isArray(result.data)) {
       return result.data; // 유효한 데이터 반환
     } else {
-      console.error("Invalid response format:", result);
       return []; // 유효하지 않은 경우 빈 배열 반환
     }
   } catch (error) {
@@ -428,7 +456,7 @@ const Item = ({
                 <CommentItem
                   comment={item.comment}
                   nickname={item.nickname}
-                  profileImgPath={profileImgPath} // 여기에 올바른 프로필 이미지 경로를 추가
+                  profileImgPath={item.profileImgPath} // 여기에 올바른 프로필 이미지 경로를 추가
                 />
               )}
               keyExtractor={(item) => item.commentId.toString()}
@@ -461,15 +489,18 @@ const HomeScreen = () => {
     setLoading(true);
     try {
       const capsuleResult = await GetCapsule(page, 10);
-      const profileResult = await GetProfileImgPath();
+      const profileImgPromises = capsuleResult.map(
+        (capsule) => GetProfileImgPath(capsule.capsuleId) // 각 캡슐의 프로필 이미지 경로 가져오기
+      );
 
-      const newData = capsuleResult.map((capsule) => ({
+      const profileImgPaths = await Promise.all(profileImgPromises); // 모든 프로필 이미지 경로 가져오기
+
+      const newData = capsuleResult.map((capsule, index) => ({
         ...capsule,
-        profileImgPath: profileResult,
+        profileImgPath: profileImgPaths[index], // 해당 캡슐에 맞는 프로필 이미지 경로 설정
         initialLiked: likedCapsules.includes(capsule.capsuleId),
       }));
 
-      // 기존 데이터와 중복되지 않는 새로운 데이터만 추가
       const uniqueData = newData.filter(
         (newCapsule) =>
           !data.some(
@@ -478,7 +509,6 @@ const HomeScreen = () => {
           )
       );
 
-      // 상태 업데이트
       setData((prevData) => [...prevData, ...uniqueData]);
       setPage((prevPage) => prevPage + 1);
       setLoading(false);
@@ -497,13 +527,17 @@ const HomeScreen = () => {
     setPage(0); // 페이지를 0으로 리셋하여 처음부터 다시 로드
     setHasMoreData(true); // 더 많은 데이터가 있다고 가정
     try {
-      const capsuleResult = await GetCapsule(0, 10); // 처음 페이지 데이터를 가져옴
-      const profileResult = await GetProfileImgPath();
+      const capsuleResult = await GetCapsule(0, 10);
+      const profileImgPromises = capsuleResult.map(
+        (capsule) => GetProfileImgPath(capsule.capsuleId) // 각 캡슐의 프로필 이미지 경로 가져오기
+      );
 
-      const mergedData = capsuleResult.map((capsule) => {
+      const profileImgPaths = await Promise.all(profileImgPromises); // 모든 프로필 이미지 경로 가져오기
+
+      const mergedData = capsuleResult.map((capsule, index) => {
         return {
           ...capsule,
-          profileImgPath: profileResult,
+          profileImgPath: profileImgPaths[index], // 해당 캡슐에 맞는 프로필 이미지 경로 설정
           initialLiked: likedCapsules.includes(capsule.capsuleId),
         };
       });
