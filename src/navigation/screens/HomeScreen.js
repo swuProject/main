@@ -608,10 +608,7 @@ const styles = StyleSheet.create({
   },
   item: {
     backgroundColor: "white",
-    padding: 20,
-    marginVertical: 8,
-    marginHorizontal: 16,
-    borderRadius: 10,
+    marginVertical: 12,
   },
   userContainer: {
     flexDirection: "row",
@@ -619,28 +616,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 16,
   },
   image: {
     width: "100%",
     height: 200,
-    borderRadius: 10,
-    marginTop: 10,
   },
   content: {
-    fontSize: 16,
+    fontSize: 14,
     marginTop: 10,
+    marginLeft: 10,
   },
   readMore: {
     color: "blue",
     marginTop: 5,
   },
   profileImage: {
-    width: 50,
-    height: 50,
+    width: 36,
+    height: 36,
     borderRadius: 25,
     marginRight: 10,
+    marginLeft: 10,
   },
   actionsContainer: {
     flexDirection: "row",
@@ -652,10 +648,11 @@ const styles = StyleSheet.create({
   likeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 20,
+    marginRight: 10,
+    marginLeft: 10,
   },
   likeCount: {
-    marginLeft: 5,
+    marginLeft: 1,
   },
   visitCount: {
     marginTop: 10,
@@ -664,16 +661,17 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: "flex-end",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     backgroundColor: "white",
     padding: 20,
-    borderRadius: 10,
-    width: "80%",
-    height: "50%",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    width: "100%",
+    height: "60%",
   },
   commentItem: {
     flexDirection: "row",
