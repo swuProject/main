@@ -5,11 +5,14 @@ import {
   TextInput,
   Text,
   TouchableOpacity,
+  Image,
+  FlatList,
 } from "react-native";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage import
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Modal from "react-native-modal";
 
 export default function MapScreen() {
   const [location, setLocation] = useState(null);
@@ -17,6 +20,8 @@ export default function MapScreen() {
   const [errorMsg, setErrorMsg] = useState(null);
   const [region, setRegion] = useState(null);
   const [capsules, setCapsules] = useState([]); // 캡슐 데이터를 저장할 상태
+  const [isModalVisible, setIsModalVisible] = useState(false); // 모달 상태
+  const [selectedCapsules, setSelectedCapsules] = useState([]); // 선택된 마커 주변의 캡슐들
 
   useEffect(() => {
     (async () => {
@@ -71,8 +76,8 @@ export default function MapScreen() {
         setRegion({
           latitude,
           longitude,
-          latitudeDelta: 0.5, // 5km 반경을 위한 확대 조정
-          longitudeDelta: 0.5,
+          latitudeDelta: 0.1, // 500m 반경을 위한 확대 조정
+          longitudeDelta: 0.1,
         });
       } else {
         setErrorMsg("Address not found");
@@ -83,6 +88,24 @@ export default function MapScreen() {
     }
   };
 
+  // 모달 표시 핸들러
+  const handleMarkerPress = (capsule) => {
+    // 클릭한 마커 근처의 캡슐들 필터링 (예: 같은 위도/경도 또는 특정 반경 내)
+    const nearbyCapsules = capsules.filter(
+      (c) =>
+        Math.abs(c.latitude - capsule.latitude) < 0.01 &&
+        Math.abs(c.longitude - capsule.longitude) < 0.01
+    );
+
+    setSelectedCapsules(nearbyCapsules);
+    setIsModalVisible(true); // 모달 표시
+  };
+
+  // 모달 닫기 핸들러
+  const closeModal = () => {
+    setIsModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -90,7 +113,7 @@ export default function MapScreen() {
         region={region}
         showsUserLocation={true}
         followsUserLocation={true}
-        onRegionChangeComplete={setRegion} // 지역 변경 시 region을 업데이트
+        onRegionChangeComplete={setRegion}
       >
         {location && (
           <Marker
@@ -104,17 +127,35 @@ export default function MapScreen() {
         )}
 
         {/* 타임캡슐 위치에 마커 표시 */}
-        {capsules.map((capsule) => (
-          <Marker
-            key={capsule.capsuleId}
-            coordinate={{
-              latitude: capsule.latitude,
-              longitude: capsule.longitude,
-            }}
-            title={capsule.nickname}
-            description={capsule.content}
-          />
-        ))}
+        {capsules.map((capsule) => {
+          const imageUrl =
+            capsule.imageList && capsule.imageList.length > 0
+              ? capsule.imageList[0].imagePath
+              : "https://example.com/default_marker.png"; // 기본 마커 이미지
+
+          return (
+            <Marker
+              key={capsule.capsuleId}
+              coordinate={{
+                latitude: capsule.latitude,
+                longitude: capsule.longitude,
+              }}
+              onPress={() => handleMarkerPress(capsule)} // 마커 클릭 시
+            >
+              <View style={styles.customMarker}>
+                <Image
+                  source={{ uri: imageUrl }}
+                  style={styles.markerImage}
+                  resizeMode="cover"
+                />
+              </View>
+              <Callout>
+                <Text>{capsule.nickname}</Text>
+                <Text>{capsule.content}</Text>
+              </Callout>
+            </Marker>
+          );
+        })}
       </MapView>
 
       <View style={styles.overlay}>
@@ -129,6 +170,41 @@ export default function MapScreen() {
         </TouchableOpacity>
         {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
       </View>
+
+      {/* 모달 */}
+      <Modal
+        isVisible={isModalVisible}
+        onBackdropPress={closeModal} // 모달 밖을 클릭하면 닫기
+        style={styles.modal}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>주변 캡슐 목록</Text>
+          <FlatList
+            data={selectedCapsules}
+            keyExtractor={(item) => item.capsuleId.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.capsuleItem}>
+                <Image
+                  source={{
+                    uri:
+                      item.imageList && item.imageList.length > 0
+                        ? item.imageList[0].imagePath
+                        : "https://example.com/default_marker.png",
+                  }}
+                  style={styles.capsuleImage}
+                />
+                <View style={styles.capsuleText}>
+                  <Text style={styles.capsuleNickname}>{item.nickname}</Text>
+                  <Text>{item.content}</Text>
+                </View>
+              </View>
+            )}
+          />
+          <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+            <Text style={styles.closeButtonText}>닫기</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -139,7 +215,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   map: {
-    ...StyleSheet.absoluteFillObject, // 화면 꽉 채우기
+    ...StyleSheet.absoluteFillObject,
   },
   overlay: {
     position: "absolute",
@@ -147,7 +223,7 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     padding: 10,
-    backgroundColor: "rgba(255, 255, 255, 0.8)", // 반투명하게
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
     borderRadius: 8,
   },
   input: {
@@ -170,5 +246,58 @@ const styles = StyleSheet.create({
   errorText: {
     color: "red",
     marginTop: 10,
+  },
+  customMarker: {
+    backgroundColor: "white",
+    padding: 5,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#007BFF",
+  },
+  markerImage: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  modal: {
+    justifyContent: "flex-end",
+    margin: 0,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  capsuleItem: {
+    flexDirection: "row",
+    marginBottom: 10,
+  },
+  capsuleImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  capsuleText: {
+    flex: 1,
+  },
+  capsuleNickname: {
+    fontWeight: "bold",
+  },
+  closeButton: {
+    backgroundColor: "#007BFF",
+    padding: 10,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
