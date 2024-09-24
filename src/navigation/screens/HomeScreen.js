@@ -315,167 +315,6 @@ const CommentItem = ({ comment, nickname, profileImgPath }) => {
   );
 };
 
-// Item 컴포넌트
-// const Item = ({
-//   capsuleId,
-//   nickname,
-//   content,
-//   imageList,
-//   profileImgPath,
-//   initialLiked,
-// }) => {
-//   const [expanded, setExpanded] = useState(false);
-//   const [liked, setLiked] = useState(initialLiked); // 좋아요 상태 초기화
-//   const [modalVisible, setModalVisible] = useState(false);
-//   const [visitCount, setVisitCount] = useState(0);
-//   const [likeCount, setLikeCount] = useState(0);
-//   const [comments, setComments] = useState([]);
-//   const [commentCount, setCommentCount] = useState(0);
-//   const [newComment, setNewComment] = useState("");
-
-//   useEffect(() => {
-//     const fetchVisitCount = async () => {
-//       const count = await GetVisitCount(capsuleId);
-//       setVisitCount(count);
-//     };
-
-//     const fetchLikeCount = async () => {
-//       const count = await GetLikeCount(capsuleId);
-//       setLikeCount(count);
-//     };
-
-//     const fetchCommentCount = async () => {
-//       const count = await GetCommentCount(capsuleId);
-//       setCommentCount(count);
-//     };
-
-//     fetchCommentCount();
-//     fetchVisitCount();
-//     fetchLikeCount();
-//   }, [capsuleId]);
-
-//   const handleLike = async () => {
-//     const userId = await AsyncStorage.getItem("profileId");
-//     const timeCapsuleId = capsuleId;
-//     if (userId) {
-//       await SaveLike(userId, capsuleId);
-//       setLiked(!liked);
-//       const newLikeCount = await GetLikeCount(capsuleId);
-//       setLikeCount(newLikeCount);
-//     }
-//   };
-
-//   const handleOpenModal = async () => {
-//     const fetchedComments = await GetComments(capsuleId);
-//     setComments(fetchedComments);
-//     setModalVisible(true);
-//   };
-
-//   const handleCloseModal = () => {
-//     setModalVisible(false);
-//   };
-
-//   const handleSaveComment = async () => {
-//     const profileId = await AsyncStorage.getItem("profileId");
-//     if (profileId && newComment) {
-//       await SaveComment(profileId, capsuleId, newComment);
-//       const updatedComments = await GetComments(capsuleId);
-//       setComments(updatedComments);
-//       setCommentCount(updatedComments.length);
-//       setNewComment("");
-//     }
-//   };
-
-//   const imageUrl =
-//     imageList && imageList.length > 0 ? imageList[0].imagePath : null;
-
-//   return (
-//     <View style={styles.item}>
-//       <View style={styles.userContainer}>
-//         {profileImgPath ? (
-//           <Image style={styles.profileImage} source={{ uri: profileImgPath }} />
-//         ) : (
-//           <Text>프로필 이미지 없음</Text>
-//         )}
-//         <Text style={styles.title}>{nickname}</Text>
-//       </View>
-//       {imageUrl ? (
-//         <Image style={styles.image} source={{ uri: imageUrl }} />
-//       ) : (
-//         <Text>이미지 없음</Text>
-//       )}
-//       <Text style={styles.content}>
-//         {expanded || content.length <= 40
-//           ? content
-//           : `${content.slice(0, 40)}...`}
-//       </Text>
-//       {content.length > 40 && (
-//         <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-//           <Text style={styles.readMore}>
-//             {expanded ? "간략히" : "...더보기"}
-//           </Text>
-//         </TouchableOpacity>
-//       )}
-//       <View style={styles.actionsContainer}>
-//         <TouchableOpacity onPress={handleLike} style={styles.likeContainer}>
-//           <Icon
-//             name="heart"
-//             size={24}
-//             color={liked ? "red" : "#BBBBBB"}
-//             style={styles.actionIcon}
-//           />
-//           <Text style={styles.likeCount}>{likeCount}</Text>
-//         </TouchableOpacity>
-//         <TouchableOpacity
-//           onPress={handleOpenModal}
-//           style={styles.likeContainer}
-//         >
-//           <Icon
-//             name="comment"
-//             size={24}
-//             color="#BBBBBB"
-//             style={styles.actionIcon}
-//           />
-//           {/* css해야함 */}
-//           <Text style={styles.likeCount}>{commentCount}</Text>
-//         </TouchableOpacity>
-//       </View>
-//       {/* <Text style={styles.visitCount}>조회수: {visitCount}</Text> */}
-//       <Modal
-//         animationType="slide"
-//         transparent={true}
-//         visible={modalVisible}
-//         onRequestClose={handleCloseModal}
-//       >
-//         <View style={styles.modalContainer}>
-//           <View style={styles.modalContent}>
-//             <Text>댓글</Text>
-//             <FlatList
-//               data={comments}
-//               renderItem={({ item }) => (
-//                 <CommentItem
-//                   comment={item.comment}
-//                   nickname={item.nickname}
-//                   profileImgPath={item.profileImgPath} // 여기에 올바른 프로필 이미지 경로를 추가
-//                 />
-//               )}
-//               keyExtractor={(item) => item.commentId.toString()}
-//             />
-//             <TextInput
-//               style={styles.commentInput}
-//               value={newComment}
-//               onChangeText={setNewComment}
-//               placeholder="댓글을 입력하세요"
-//             />
-//             <Button title="댓글 저장" onPress={handleSaveComment} />
-//             <Button title="닫기" onPress={handleCloseModal} />
-//           </View>
-//         </View>
-//       </Modal>
-//     </View>
-//   );
-// };
-
 const Item = ({
   capsuleId,
   nickname,
@@ -790,6 +629,11 @@ const styles = StyleSheet.create({
   image: {
     width: 300,
     height: 200,
+<<<<<<< Updated upstream
+=======
+    borderRadius: 10,
+    margin: 5,
+>>>>>>> Stashed changes
   },
   content: {
     fontSize: 14,
