@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Swiper from "react-native-swiper";
 
 const base_url = "https://tuituiworld.store:8443";
 
@@ -396,20 +397,22 @@ const Item = ({
         <Text style={styles.title}>{nickname}</Text>
       </View>
 
-      {/* FlatList로 여러 이미지 보여주기 */}
       {imageList && imageList.length > 0 ? (
-        <FlatList
-          data={imageList}
-          horizontal={true} // 이미지가 여러 개일 때 수평 스크롤 지원
-          renderItem={({ item }) => (
+        <Swiper
+          style={styles.swiperContainer}
+          showsButtons={true} // 좌우 화살표 버튼 표시
+          loop={false} // 이미지 끝에 도달하면 다시 처음으로 가지 않게 설정
+          showsPagination={true} // 페이지 표시 (하단의 점들)
+        >
+          {imageList.map((item, index) => (
             <Image
+              key={index}
               style={[styles.image, { resizeMode: "cover" }]} // 크기와 표시 방법을 명확히 설정
               source={{ uri: item.imagePath }}
               onError={(error) => console.log("Image load error:", error)} // 이미지 로드 에러 확인
             />
-          )}
-          keyExtractor={(item, index) => index.toString()}
-        />
+          ))}
+        </Swiper>
       ) : (
         <Text>이미지 없음</Text>
       )}
@@ -626,11 +629,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
   },
+  swiperContainer: {
+    height: 250,
+  },
   image: {
-    width: 300,
-    height: 200,
+    width: "100%",
+    height: "100%",
     borderRadius: 10,
-    margin: 5,
   },
   content: {
     fontSize: 14,
