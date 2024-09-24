@@ -19,7 +19,6 @@ const ProfileScreen = () => {
   const navigation = useNavigation();
 
   const fetchFollowData = async (profileId, accessToken) => {
-    console.log(profileId);
     try {
       const response = await fetch(`${base_url}/api/profiles/follows/${profileId}`, {
         method: 'GET',
@@ -32,8 +31,6 @@ const ProfileScreen = () => {
       if (response.ok) {
         const data = await response.json();
         const { followerList, followingList } = data.data;
-
-        console.log(data.data);
   
         setFollowerCount(followerList ? followerList.length : 0);
         setFollowingCount(followingList ? followingList.length : 0);

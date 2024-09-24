@@ -790,11 +790,6 @@ const styles = StyleSheet.create({
   image: {
     width: 300,
     height: 200,
-<<<<<<< Updated upstream
-=======
-    borderRadius: 10,
-    margin: 5,
->>>>>>> Stashed changes
   },
   content: {
     fontSize: 14,
