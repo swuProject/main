@@ -1,19 +1,5 @@
   import React, { useState, useEffect } from "react";
-  import {
-    SafeAreaView,
-    View,
-    FlatList,
-    StyleSheet,
-    Text,
-    StatusBar,
-    ActivityIndicator,
-    Image,
-    TouchableOpacity,
-    Modal,
-    Button,
-    TextInput,
-    RefreshControl,
-  } from "react-native";
+  import { SafeAreaView, View, FlatList, StyleSheet, Text, StatusBar, ActivityIndicator, Image, TouchableOpacity, Modal, Button, TextInput, RefreshControl, } from "react-native";
   import Icon from "react-native-vector-icons/FontAwesome";
   import AsyncStorage from "@react-native-async-storage/async-storage";
   import Swiper from "react-native-swiper";

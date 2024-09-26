@@ -1,19 +1,10 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  TextInput,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  Modal,
-  FlatList,
-} from "react-native";
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, FlatList, } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import Swiper from "react-native-swiper";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage 추가
 
 export default function WritePageScreen({ navigation }) {
@@ -68,6 +59,22 @@ export default function WritePageScreen({ navigation }) {
 
   // 컴포넌트가 마운트될 때 위치 정보를 가져옴
   useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        alert('푸시 알림 권한이 필요합니다.');
+      }
+    };
+    
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+  
+    requestPermissions();
     getLocation();
   }, []);
 
@@ -127,8 +134,9 @@ export default function WritePageScreen({ navigation }) {
       console.log("Response text:", responseText);
 
       if (response.ok) {
-        alert("타임캡슐이 저장되었습니다!");
-        navigation.goBack();
+        setNotification(daysLater); // 저장 후 타임캡슐 알림 호출
+
+        navigation.navigate("Home");
       } else {
         console.log("서버 오류:", responseText);
         alert(
@@ -148,6 +156,24 @@ export default function WritePageScreen({ navigation }) {
 
   // "몇 일 후" 선택 목록 데이터 생성
   const days = Array.from({ length: 365 }, (_, index) => index + 1);
+
+  // 알림
+  const setNotification = async (daysLater) => {
+    const triggerTime = new Date();
+    triggerTime.setDate(triggerTime.getDate() + daysLater); // daysLater 후의 날짜 계산
+  
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "TuiTui",
+        body: "앱을 열어 추억을 확인해 보세요 !",
+      },
+      trigger: {
+        date: triggerTime,
+      },
+    });
+  
+    console.log(`${daysLater}일 후에 알림이 설정되었습니다.`);
+  };
 
   return (
     <ScrollView style={styles.container}>

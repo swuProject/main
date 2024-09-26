@@ -24,6 +24,7 @@
     "expo-image-picker": "~15.0.7",
     "expo-location": "~17.0.1",
     "expo-media-library": "~16.0.4",
+    "expo-notifications": "~0.28.17",
     "expo-status-bar": "~1.12.1",
     "moment": "^2.30.1",
     "react": "18.2.0",
