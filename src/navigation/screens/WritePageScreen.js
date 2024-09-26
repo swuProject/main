@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Text, StyleSheet, TouchableOpacity, Image, ScrollView, Modal, FlatList, } from "react-native";
+import {
+  View,
+  TextInput,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Modal,
+  FlatList,
+} from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
 import Swiper from "react-native-swiper";
@@ -61,11 +71,11 @@ export default function WritePageScreen({ navigation }) {
   useEffect(() => {
     const requestPermissions = async () => {
       const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('푸시 알림 권한이 필요합니다.');
+      if (status !== "granted") {
+        alert("푸시 알림 권한이 필요합니다.");
       }
     };
-    
+
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -73,7 +83,7 @@ export default function WritePageScreen({ navigation }) {
         shouldSetBadge: false,
       }),
     });
-  
+
     requestPermissions();
     getLocation();
   }, []);
@@ -161,7 +171,7 @@ export default function WritePageScreen({ navigation }) {
   const setNotification = async (daysLater) => {
     const triggerTime = new Date();
     triggerTime.setDate(triggerTime.getDate() + daysLater); // daysLater 후의 날짜 계산
-  
+
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "TuiTui",
@@ -171,7 +181,7 @@ export default function WritePageScreen({ navigation }) {
         date: triggerTime,
       },
     });
-  
+
     console.log(`${daysLater}일 후에 알림이 설정되었습니다.`);
   };
 
