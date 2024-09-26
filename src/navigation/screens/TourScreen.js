@@ -9,46 +9,28 @@ import {
   SafeAreaView,
   Linking,
 } from "react-native";
-import Geolocation from "react-native-geolocation-service";
 
 const TourScreen = () => {
-  const [festivals, setFestivals] = useState([]);
+  const [tourData, setTourData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [latitude, setLatitude] = useState(null);
-  const [longitude, setLongitude] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    // 유저 위치 받아오기
-    Geolocation.getCurrentPosition(
-      (position) => {
-        // position.coords.latitude
-        setLatitude(37.6035);
-        // position.coords.longitude
-        setLongitude(126.766);
-      },
-      (error) => {
-        console.error(error);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
-  }, []);
+    fetchTourData(page);
+  }, [page]);
 
-  useEffect(() => {
-    if (latitude && longitude) {
-      fetchFestivals(); // 위치가 설정되면 API 호출
-    }
-  }, [latitude, longitude]);
-
-  const fetchFestivals = async () => {
+  const fetchTourData = async (pageNum) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://jy3lh3sugl.execute-api.ap-northeast-2.amazonaws.com/default/get-festa-list?latitude=${latitude}&longitude=${longitude}`
+        `https://jy3lh3sugl.execute-api.ap-northeast-2.amazonaws.com/default/suggested_tour_list?latitude=37.568477&longitude=126.981611&numOfRows=4&page=${pageNum}`
       );
       const data = await response.json();
-      setFestivals(data.festivals); // 축제 데이터를 상태에 저장
+      setTourData((prevData) => [...prevData, ...data.result]); // 이전 데이터에 새 데이터를 추가
+      setTotalPages(data.totalPages);
     } catch (error) {
-      console.error("Error fetching festivals:", error);
+      console.error("Error fetching tour data:", error);
     }
     setLoading(false);
   };
@@ -56,35 +38,47 @@ const TourScreen = () => {
   const renderItem = ({ item }) => (
     <View style={styles.item}>
       <Image
-        source={{ uri: item.image_url }}
+        source={{ uri: item.firstimage }} // 이미지 URL
         style={styles.image}
-        resizeMode="contain" // 이미지 비율을 유지하면서 크기에 맞게 조정
+        resizeMode="cover" // 이미지를 잘 보이도록 크기 조정
       />
-      <Text style={styles.title}>{item.festival_name}</Text>
-      <Text style={styles.address}>{item.short_address}</Text>
-      <Text style={styles.dates}>
-        {item.start_date} - {item.end_date}
-      </Text>
-      <TouchableOpacity onPress={() => handlePress(item.homepage)}>
-        <Text style={styles.link}>More Info</Text>
+      <Text style={styles.title}>{item.title}</Text>
+      <Text style={styles.address}>{item.addr1}</Text>
+      <Text style={styles.distance}>Distance: {item.dist} meters</Text>
+      <TouchableOpacity onPress={() => handlePress(item.mapx, item.mapy)}>
+        <Text style={styles.link}>View on Map</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const handlePress = (url) => {
-    // 웹페이지로 이동
+  const handlePress = (mapx, mapy) => {
+    // 지도앱으로 이동 (구글맵 등으로)
+    const url = `https://maps.google.com/?q=${mapy},${mapx}`;
     Linking.openURL(url);
+  };
+
+  const handleLoadMore = () => {
+    if (page < totalPages) {
+      setPage((prevPage) => prevPage + 1); // 다음 페이지 로드
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {loading ? (
+      {loading && page === 1 ? ( // 첫 페이지 로딩 중이면 인디케이터 표시
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <FlatList
-          data={festivals}
+          data={tourData}
           renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
+          keyExtractor={(item, index) => `${item.contentid}-${index}`} // contentid와 인덱스를 결합하여 유일한 키 생성
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loading && page > 1 ? (
+              <ActivityIndicator size="large" color="#0000ff" />
+            ) : null
+          }
         />
       )}
     </SafeAreaView>
@@ -93,11 +87,16 @@ const TourScreen = () => {
 
 const styles = {
   container: { flex: 1, padding: 16 },
-  item: { marginBottom: 16 },
+  item: {
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    paddingBottom: 16,
+  },
   image: { width: "100%", height: 200, borderRadius: 8 },
   title: { fontSize: 18, fontWeight: "bold", marginVertical: 8 },
   address: { fontSize: 14, color: "#666" },
-  dates: { fontSize: 14, color: "#888" },
+  distance: { fontSize: 12, color: "#888", marginTop: 4 },
   link: { fontSize: 14, color: "#1e90ff", marginTop: 8 },
 };
 

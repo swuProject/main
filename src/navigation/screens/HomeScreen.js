@@ -18,6 +18,10 @@ import Icon from "react-native-vector-icons/FontAwesome";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Swiper from "react-native-swiper";
 
+// 관광 api 활용 캡슐
+import FestivalScreen from "./FestivalScreen";
+import TourScreen from "./TourScreen";
+
 const base_url = "https://tuituiworld.store:8443";
 
 const getAuthToken = async () => {
@@ -551,6 +555,8 @@ const HomeScreen = () => {
   const [hasMoreData, setHasMoreData] = useState(true);
   const [likedCapsules, setLikedCapsules] = useState([]); // 좋아요 데이터 상태 추가
   const [refreshing, setRefreshing] = useState(false); // 새로고침 상태 추가
+  const [festivalDisplayed, setFestivalDisplayed] = useState(false); // FestivalScreen 표시 여부 상태
+  const [tourDisplayed, setTourDisplayed] = useState(false); // TourScreen 표시 여부 상태
 
   const fetchData = async () => {
     if (loading || !hasMoreData) return;
@@ -584,6 +590,15 @@ const HomeScreen = () => {
       if (capsuleResult.length < 10) {
         setHasMoreData(false);
       }
+
+      // FestivalScreen과 TourScreen을 한 번만 표시하도록 조건 추가
+      if (data.length + uniqueData.length >= 5 && !festivalDisplayed) {
+        setFestivalDisplayed(true);
+      }
+
+      if (data.length + uniqueData.length >= 10 && !tourDisplayed) {
+        setTourDisplayed(true);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       setLoading(false);
@@ -594,6 +609,8 @@ const HomeScreen = () => {
     setRefreshing(true);
     setPage(0); // 페이지를 0으로 리셋하여 처음부터 다시 로드
     setHasMoreData(true); // 더 많은 데이터가 있다고 가정
+    setFestivalDisplayed(false); // 새로고침 시 FestivalScreen을 다시 숨김
+    setTourDisplayed(false); // 새로고침 시 TourScreen을 다시 숨김
     try {
       const capsuleResult = await GetCapsule(0, 10);
       const profileImgPromises = capsuleResult.map(
@@ -653,7 +670,11 @@ const HomeScreen = () => {
         onEndReached={fetchData}
         onEndReachedThreshold={0.5}
         ListFooterComponent={
-          loading && <ActivityIndicator size="large" color="#0000ff" />
+          <>
+            {loading && <ActivityIndicator size="large" color="#0000ff" />}
+            {festivalDisplayed && <FestivalScreen />}
+            {tourDisplayed && <TourScreen />}
+          </>
         }
         refreshControl={
           <RefreshControl
