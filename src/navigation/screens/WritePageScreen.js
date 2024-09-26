@@ -116,14 +116,12 @@ export default function WritePageScreen({ navigation }) {
       formData.append("request", JSON.stringify(request));
 
       // 이미지 추가 (서버가 '파일' 키로 이미지를 받는다고 가정)
-      images.forEach((imageUri, index) => {
-        const fileName = imageUri.split("/").pop(); // 이미지 이름 추출
-        const fileType = imageUri.split(".").pop(); // 이미지 파일 확장자 추출
+      images.forEach((imageUri) => {
 
         formData.append("file", {
           uri: imageUri,
-          name: `image_${index}.${fileType}`,
-          type: `image/${fileType}`,
+          type: "image/jpeg",
+          name: "post.jpg",
         });
       });
 

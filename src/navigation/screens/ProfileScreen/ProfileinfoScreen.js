@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Image, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
+import { View, Text, Image, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, FlatList, Dimensions } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 
@@ -10,9 +10,14 @@ export default function ProfileinfoScreen({ route }) {
   const [isFollowing, setIsFollowing] = useState(null); // 초기값 null
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const navigation = useNavigation();
+  const [posts, setPosts] = useState([]);
 
+  const navigation = useNavigation();
+  const screenWidth = Dimensions.get('window').width;
+
+  const base_url = "https://tuituiworld.store:8443";
   const SERVER_URL = "https://tuituiworld.store:8443/api/profiles/nicknames/";
+  const defaultImg = "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png";
 
   const fetchUser = async () => {
     setLoading(true);
@@ -37,7 +42,10 @@ export default function ProfileinfoScreen({ route }) {
         navigation.setOptions({
           headerTitle: data.data.nickname || "닉네임 없음",
         });
+
         await checkFollowingStatus(data.data.profileId);
+        await fetchPosts(data.data.nickname, accessToken);
+
       } else if (response.status === 404) {
         Alert.alert("오류", "해당 유저를 찾을 수 없습니다.");
       } else {
@@ -48,6 +56,27 @@ export default function ProfileinfoScreen({ route }) {
       Alert.alert("오류", "서버 상태를 확인해주세요.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPosts = async (nickname, accessToken) => {
+    try {
+      const response = await fetch(`${base_url}/api/profiles/nicknames/${nickname}/capsules?pageNo=0&pageSize=9&sortBy=writeAt`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data.data.contents); // Update posts state with the fetched posts
+      } else {
+        console.error('게시글을 가져오는데 실패했습니다:', response.status);
+      }
+    } catch (error) {
+      console.error('게시글 가져오기 오류:', error);
     }
   };
 
@@ -124,6 +153,19 @@ export default function ProfileinfoScreen({ route }) {
     }
   };
 
+  const renderPost = ({ item }) => {
+    // imageList가 존재하고, 길이가 0보다 클 경우에만 첫 번째 이미지를 사용
+    const imageUri = item.imageList && item.imageList.length > 0 
+      ? item.imageList[0].imagePath 
+      : 'https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png'; // 기본 이미지
+  
+    return (
+      <View style={styles.postContainer}>
+        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3 - 10, height: screenWidth / 3 - 10 }} /> 
+      </View>
+    );
+  };
+
   useEffect(() => {
     fetchUser();
   }, [nickname]);
@@ -159,7 +201,7 @@ export default function ProfileinfoScreen({ route }) {
         />
         <View style={styles.stats}>
           <View style={styles.stat}>
-            <Text style={styles.statNumber}>0</Text>
+            <Text style={styles.statNumber}>{posts.length}</Text>
             <Text style={styles.statLabel}>게시글</Text>
           </View>
           <View style={styles.stat}>
@@ -181,6 +223,17 @@ export default function ProfileinfoScreen({ route }) {
       >
         <Text style={styles.buttonText}>{isFollowing ? "언팔로우" : "팔로우"}</Text>
       </TouchableOpacity>
+      {isFollowing ? (
+      <FlatList
+        data={posts}
+        renderItem={renderPost}
+        keyExtractor={(item) => item.capsuleId.toString()}
+        numColumns={3}
+        style={styles.posts}
+      />
+    ) : (
+      <Text></Text>
+    )}
     </View>
   );
 }
@@ -244,5 +297,10 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 16,
+  },
+  posts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 30,
   },
 });

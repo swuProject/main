@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useLayoutEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, ActivityIndicator, FlatList, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { refreshToken } from '../../../../Components/refreshToken';
@@ -15,8 +15,10 @@ const ProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [posts, setPosts] = useState([]);
 
   const navigation = useNavigation();
+  const screenWidth = Dimensions.get('window').width;
 
   const fetchFollowData = async (profileId, accessToken) => {
     try {
@@ -90,6 +92,8 @@ const ProfileScreen = () => {
         setName(name || "이름 없음");
         setDescribeSelf(describeSelf || "");
 
+        await fetchPosts(nickname, accessToken);
+
         // 프로필 이미지 설정
         if (profileImgPath) {
           try {
@@ -117,6 +121,27 @@ const ProfileScreen = () => {
     }
   }, []);  
 
+  const fetchPosts = async (nickname, accessToken) => {
+    try {
+      const response = await fetch(`${base_url}/api/profiles/nicknames/${nickname}/capsules?pageNo=0&pageSize=9&sortBy=writeAt`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPosts(data.data.contents); // Update posts state with the fetched posts
+      } else {
+        console.error('게시글을 가져오는데 실패했습니다:', response.status);
+      }
+    } catch (error) {
+      console.error('게시글 가져오기 오류:', error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       fetchProfile();
@@ -133,6 +158,19 @@ const ProfileScreen = () => {
     });
   }, [navigation, account]);
 
+  const renderPost = ({ item }) => {
+    const imageUri = item.imageList && item.imageList.length > 0 
+      ? item.imageList[0].imagePath 
+      : defaultImg;
+
+    return (
+      <View style={styles.postContainer}>
+        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3 - 10, height: screenWidth / 3 - 10 }} />
+      </View>
+    );
+  };
+  
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -143,7 +181,7 @@ const ProfileScreen = () => {
             <Image style={styles.img} source={{ uri: profileImgPath }} />
             <View style={styles.stats}>
               <View style={styles.stat}>
-                <Text style={styles.statNumber}>0</Text>
+                <Text style={styles.statNumber}>{posts.length}</Text>
                 <Text style={styles.statLabel}>게시글</Text>
               </View>
               <View style={styles.stat}>
@@ -158,7 +196,13 @@ const ProfileScreen = () => {
           </View>
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.describeSelf}>{describeSelf}</Text>
-          <View style={styles.posts}></View>
+          <FlatList
+            data={posts}
+            renderItem={renderPost}
+            keyExtractor={(item) => item.capsuleId.toString()}
+            numColumns={3}
+            style={styles.posts}
+          />
         </>
       )}
     </View>
@@ -215,11 +259,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 16,
   },
-  posts: {
-    flexDirection: 'row',
-  },
   headerLeft: {
     marginLeft: 16,
+  },
+  posts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 30,
   },
 });
 
