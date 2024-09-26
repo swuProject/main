@@ -165,7 +165,7 @@ const ProfileScreen = () => {
 
     return (
       <View style={styles.postContainer}>
-        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3 - 10, height: screenWidth / 3 - 10 }} />
+        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3, height: screenWidth / 3 }} />
       </View>
     );
   };
@@ -212,7 +212,6 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: '#fff',
   },
   profileHeader: {
@@ -224,8 +223,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    marginTop: 16,
     marginRight: 16,
-    marginLeft: 8,
+    marginLeft: 16,
   },
   stats: {
     flexDirection: 'row',
@@ -249,15 +249,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
+    marginLeft: 16,
+  },
+  describeSelf: {
+    fontSize: 16,
+    marginBottom: 16,
+    marginLeft: 16,
   },
   account: {
     fontSize: 18,
     fontWeight: 'bold',
     color: 'black',
-  },
-  describeSelf: {
-    fontSize: 16,
-    marginBottom: 16,
   },
   headerLeft: {
     marginLeft: 16,

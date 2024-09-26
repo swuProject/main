@@ -16,7 +16,6 @@ export default function ProfileinfoScreen({ route }) {
   const screenWidth = Dimensions.get('window').width;
 
   const base_url = "https://tuituiworld.store:8443";
-  const SERVER_URL = "https://tuituiworld.store:8443/api/profiles/nicknames/";
   const defaultImg = "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png";
 
   const fetchUser = async () => {
@@ -28,7 +27,7 @@ export default function ProfileinfoScreen({ route }) {
         return;
       }
 
-      const response = await fetch(`${SERVER_URL}${encodeURIComponent(nickname)}`, {
+      const response = await fetch(`${base_url}/api/profiles/nicknames/${encodeURIComponent(nickname)}`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -157,11 +156,11 @@ export default function ProfileinfoScreen({ route }) {
     // imageList가 존재하고, 길이가 0보다 클 경우에만 첫 번째 이미지를 사용
     const imageUri = item.imageList && item.imageList.length > 0 
       ? item.imageList[0].imagePath 
-      : 'https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png'; // 기본 이미지
+      : defaultImg; // 기본 이미지
   
     return (
       <View style={styles.postContainer}>
-        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3 - 10, height: screenWidth / 3 - 10 }} /> 
+        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3 , height: screenWidth / 3 }} /> 
       </View>
     );
   };
@@ -197,7 +196,7 @@ export default function ProfileinfoScreen({ route }) {
       <View style={styles.profileHeader}>
         <Image
           style={styles.img}
-          source={{ uri: user.profileImgPath || "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png" }}
+          source={{ uri: user.profileImgPath || defaultImg }}
         />
         <View style={styles.stats}>
           <View style={styles.stat}>
@@ -220,28 +219,27 @@ export default function ProfileinfoScreen({ route }) {
       <TouchableOpacity 
         style={styles.button}
         onPress={isFollowing ? unfollowUser : followUser}
-      >
+        >
         <Text style={styles.buttonText}>{isFollowing ? "언팔로우" : "팔로우"}</Text>
       </TouchableOpacity>
-      {isFollowing ? (
-      <FlatList
-        data={posts}
-        renderItem={renderPost}
-        keyExtractor={(item) => item.capsuleId.toString()}
-        numColumns={3}
-        style={styles.posts}
-      />
-    ) : (
-      <Text></Text>
-    )}
-    </View>
+        {isFollowing ? (
+          <FlatList
+            data={posts}
+            renderItem={renderPost}
+            keyExtractor={(item) => item.capsuleId.toString()}
+            numColumns={3}
+            style={styles.posts}
+          />
+          ) : (
+            <Text></Text>
+            )}
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#fff",
   },
   loadingContainer: {
@@ -258,8 +256,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    marginTop: 16,
     marginRight: 16,
-    marginLeft: 8,
+    marginLeft: 16,
   },
   stats: {
     flexDirection: "row",
@@ -283,16 +282,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
+    marginLeft: 16,
   },
   describeSelf: {
     fontSize: 16,
     marginBottom: 16,
+    marginLeft: 16,
   },
   button: {
     backgroundColor: "#007BFF",
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 12,
+    width: 320,
     alignItems: "center",
+    alignSelf: 'center',
   },
   buttonText: {
     color: "#fff",

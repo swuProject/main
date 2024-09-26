@@ -9,6 +9,7 @@ import {
   ScrollView,
   Modal,
   FlatList,
+  Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import * as ImagePicker from "expo-image-picker";
@@ -24,7 +25,6 @@ export default function WritePageScreen({ navigation }) {
   const [daysLater, setDaysLater] = useState(1); // 선택된 날짜
   const [isDayPickerVisible, setIsDayPickerVisible] = useState(false); // 날짜 선택창 표시 여부
   const [location, setLocation] = useState(null); // 위치 정보 상태
-  const [profileId, setProfileId] = useState(46); // 현재 유저의 profileId (임시로 46)
 
   const base_url = "https://tuituiworld.store:8443";
 
@@ -147,9 +147,7 @@ export default function WritePageScreen({ navigation }) {
         navigation.navigate("Home");
       } else {
         console.log("서버 오류:", responseText);
-        alert(
-          `타임캡슐 저장에 실패했습니다: ${response.status} - ${responseText}`
-        );
+        Alert.alert("오류", `이미지가 있어야 합니다.`);
       }
     } catch (error) {
       console.error("서버 오류:", error);
