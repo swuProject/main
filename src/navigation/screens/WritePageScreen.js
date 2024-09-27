@@ -18,6 +18,8 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage 추가
 
+const GOOGLE_API_KEY = "AIzaSyDfwzIc2bBgWuAo8snLmxSA996vaILfQLo"; // 여기에 Google Geocoding API 키를 추가하세요
+
 export default function WritePageScreen({ navigation }) {
   const [text, setText] = useState(""); // 글 내용 상태
   const [images, setImages] = useState([]); // 선택된 이미지 상태
@@ -25,6 +27,7 @@ export default function WritePageScreen({ navigation }) {
   const [daysLater, setDaysLater] = useState(1); // 선택된 날짜
   const [isDayPickerVisible, setIsDayPickerVisible] = useState(false); // 날짜 선택창 표시 여부
   const [location, setLocation] = useState(null); // 위치 정보 상태
+  const [currentLocation, setCurrentLocation] = useState(""); // 현재 위치를 주소 형태로 저장
 
   const base_url = "https://tuituiworld.store:8443";
 
@@ -62,8 +65,33 @@ export default function WritePageScreen({ navigation }) {
 
       const currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
+
+      // 좌표를 기반으로 주소 가져오기 (역 지오코딩)
+      const geocodedAddress = await getAddressFromCoords(
+        currentLocation.coords
+      );
+      setCurrentLocation(geocodedAddress); // 변환된 주소 설정
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // 좌표를 주소로 변환하는 함수 (역 지오코딩)
+  const getAddressFromCoords = async (coords) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${GOOGLE_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        // 반환된 주소 중 첫 번째 항목을 사용
+        return data.results[0].formatted_address;
+      } else {
+        return "주소를 찾을 수 없습니다.";
+      }
+    } catch (error) {
+      console.error("역 지오코딩 오류:", error);
+      return "주소를 불러오지 못했습니다.";
     }
   };
 
@@ -106,7 +134,7 @@ export default function WritePageScreen({ navigation }) {
       const request = {
         profileId: await AsyncStorage.getItem("profileId"),
         content: text,
-        location: "경기도 화성시 동탄지성로",
+        location: currentLocation, // 위치를 주소로 저장
         remindDate: daysLater,
         latitude: location.latitude,
         longitude: location.longitude,
@@ -117,7 +145,6 @@ export default function WritePageScreen({ navigation }) {
 
       // 이미지 추가 (서버가 '파일' 키로 이미지를 받는다고 가정)
       images.forEach((imageUri) => {
-
         formData.append("file", {
           uri: imageUri,
           type: "image/jpeg",
