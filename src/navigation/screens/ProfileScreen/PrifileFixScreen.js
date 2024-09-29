@@ -34,11 +34,10 @@ const uploadProfileImage = async (accessToken, imageUri) => {
   }
 
   const formData = new FormData();
-  const cleanedImagePath = imageUri.startsWith("file://") ? imageUri.replace("file://", "") : imageUri;
 
   formData.append("profileId", profileId);
   formData.append("file", {
-    uri: cleanedImagePath,
+    uri: imageUri,
     type: 'image/jpeg', // 이미지 파일의 MIME 타입
     name: 'profile.jpg', // 업로드될 파일 이름
   });

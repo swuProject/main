@@ -33,8 +33,8 @@ function ProfileCreateScreen({ navigation }) {
         setBirthyear(storedBirthyear || "");
         setBirthday(storedBirthday || "");
         setGender(
-          storedGender === "male" || storedGender === "M" ? "MALE" : 
-          storedGender === "female" || storedGender === "F" ? "FEMALE" : ""
+          storedGender === "male" || storedGender === "M" || storedGender === "MALE" ? "MALE" : 
+          storedGender === "female" || storedGender === "F" || storedGender === "FEMALE" ? "FEMALE" : ""
         );        
         setProfileImgPath("");
         setNickname(storedNickname || "");
@@ -92,12 +92,8 @@ function ProfileCreateScreen({ navigation }) {
         const formData = new FormData();
         formData.append("request", JSON.stringify(profileData));
         
-        const cleanedImagePath = profileImgPath.startsWith("file://")
-          ? profileImgPath.replace("file://", "")
-          : profileImgPath;
-        
         formData.append("file", {
-          uri: cleanedImagePath,
+          uri: profileImgPath,
           type: "image/jpeg",
           name: "profile.jpg",
         });
@@ -135,7 +131,6 @@ function ProfileCreateScreen({ navigation }) {
   
     } catch (error) {
       console.error("오류", error);
-      Alert.alert("오류", "프로필 생성 중 오류가 발생했습니다.");
     }
   };
   
