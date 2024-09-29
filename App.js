@@ -37,7 +37,7 @@ const App = () => {
         <Stack.Screen
           name="ProfileCreate"
           component={ProfileCreateScreen}
-          options={{ headerShown: false }}
+          options={{ headerShown: false, gestureEnabled: false, }}
         />
         <Stack.Screen
           name="MainContainer"

@@ -78,7 +78,7 @@ function Loginscreen({ navigation }) {
         throw new Error("Kakao login failed.");
       }
     } catch (err) {
-      // 에러 코드
+        console.log(err);
     } finally {
       setKakaoLoading(false);
     }
