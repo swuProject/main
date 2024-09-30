@@ -21,10 +21,7 @@ export default function MapScreen() {
   const [region, setRegion] = useState(null);
   const [capsules, setCapsules] = useState([]); // 캡슐 데이터를 저장할 상태
   const [isModalVisible, setIsModalVisible] = useState(false); // 주변 캡슐 모달 상태
-  const [isCapsuleDetailModalVisible, setIsCapsuleDetailModalVisible] =
-    useState(false); // 캡슐 상세 모달 상태
   const [selectedCapsules, setSelectedCapsules] = useState([]); // 선택된 마커 주변의 캡슐들
-  const [selectedCapsuleDetail, setSelectedCapsuleDetail] = useState(null); // 선택된 캡슐 상세 정보
 
   useEffect(() => {
     (async () => {
@@ -106,19 +103,13 @@ export default function MapScreen() {
 
   // 주변 캡슐 아이템 클릭 핸들러
   const handleCapsuleItemPress = (capsule) => {
-    setSelectedCapsuleDetail(capsule);
-    setIsCapsuleDetailModalVisible(true); // 캡슐 상세 모달 표시
+    // 상세 모달 기능이 삭제됨
+    console.log("Capsule selected:", capsule);
   };
 
   // 모달 닫기 핸들러
   const closeModal = () => {
     setIsModalVisible(false);
-  };
-
-  // 캡슐 상세 모달 닫기 핸들러
-  const closeCapsuleDetailModal = () => {
-    setIsCapsuleDetailModalVisible(false);
-    setSelectedCapsuleDetail(null); // 모달 닫을 때 상세 정보 초기화
   };
 
   return (
@@ -222,42 +213,6 @@ export default function MapScreen() {
           </TouchableOpacity>
         </View>
       </Modal>
-
-      {/* 캡슐 상세 모달 */}
-      <Modal
-        isVisible={
-          isCapsuleDetailModalVisible && selectedCapsuleDetail !== null
-        }
-        onBackdropPress={closeCapsuleDetailModal} // 모달 밖을 클릭하면 닫기
-        style={styles.modal}
-      >
-        {selectedCapsuleDetail && (
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {selectedCapsuleDetail.nickname}
-            </Text>
-            <Image
-              source={{
-                uri:
-                  selectedCapsuleDetail.imageList &&
-                  selectedCapsuleDetail.imageList.length > 0
-                    ? selectedCapsuleDetail.imageList[0].imagePath
-                    : "https://example.com/default_marker.png",
-              }}
-              style={styles.capsuleDetailImage}
-            />
-            <Text style={styles.modalContentText}>
-              {selectedCapsuleDetail.content}
-            </Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={closeCapsuleDetailModal}
-            >
-              <Text style={styles.closeButtonText}>닫기</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </Modal>
     </View>
   );
 }
@@ -338,21 +293,14 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   capsuleText: {
-    flex: 1,
+    justifyContent: "center",
   },
   capsuleNickname: {
     fontWeight: "bold",
-  },
-  capsuleDetailImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  modalContentText: {
-    marginBottom: 10,
+    fontSize: 16,
   },
   closeButton: {
+    marginTop: 10,
     backgroundColor: "#007BFF",
     padding: 10,
     borderRadius: 5,
