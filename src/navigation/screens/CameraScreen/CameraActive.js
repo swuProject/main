@@ -1,11 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as FileSystem from "expo-file-system";
 import { Button, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons"; // Icon 사용을 위한 import
 
 export default function CameraActive({ navigation }) {
   const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef(null); // 카메라 참조 설정
 
   if (!permission) {
     return <View />;
@@ -26,9 +28,22 @@ export default function CameraActive({ navigation }) {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
-  function takePicture() {
-    // 여기에 카메라 촬영 로직을 추가.
-    console.log("Picture Taken!");
+  async function takePicture() {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync(); // 사진 촬영
+        const fileUri = `${
+          FileSystem.documentDirectory
+        }photo_${Date.now()}.jpg`;
+        await FileSystem.moveAsync({
+          from: photo.uri,
+          to: fileUri,
+        });
+        console.log("Photo saved to:", fileUri);
+      } catch (error) {
+        console.error("Error taking picture:", error);
+      }
+    }
   }
 
   return (
@@ -41,7 +56,7 @@ export default function CameraActive({ navigation }) {
         <Icon name="arrow-back" size={30} color="white" />
       </TouchableOpacity>
 
-      <CameraView style={styles.camera} facing={facing}>
+      <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.shutterButton} onPress={takePicture}>
             <View style={styles.innerCircle} />
