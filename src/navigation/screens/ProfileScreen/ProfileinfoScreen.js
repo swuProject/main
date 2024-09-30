@@ -71,9 +71,7 @@ export default function ProfileinfoScreen({ route }) {
       if (response.ok) {
         const data = await response.json();
         setPosts(data.data.contents); // Update posts state with the fetched posts
-      } else {
-        console.error('게시글을 가져오는데 실패했습니다:', response.status);
-      }
+      } 
     } catch (error) {
       console.error('게시글 가져오기 오류:', error);
     }
