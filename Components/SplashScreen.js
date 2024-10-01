@@ -19,18 +19,18 @@ const SplashScreen = () => {
           
           if (accessToken) {
             // 토큰이 유효하다면 메인 화면으로 이동
-            navigation.navigate('MainContainer'); // 'Main' 화면으로 이동
+            navigation.replace('MainContainer'); // 'Main' 화면으로 이동
           } else {
             // 토큰 갱신 실패 시 로그인 화면으로 이동
-            navigation.navigate('Login');
+            navigation.replace('Login');
           }
         } else {
           // 저장된 토큰이 없다면 로그인 화면으로 이동
-          navigation.navigate('Login');
+          navigation.replace('Login');
         }
       } catch (error) {
         // 에러 발생 시 로그인 화면으로 이동
-        navigation.navigate('Login');
+        navigation.replace('Login');
       }
     };
 

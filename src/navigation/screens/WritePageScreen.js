@@ -19,7 +19,7 @@ import * as Location from "expo-location";
 import * as Notifications from "expo-notifications";
 import AsyncStorage from "@react-native-async-storage/async-storage"; // AsyncStorage 추가
 
-const GOOGLE_API_KEY = "AIzaSyDfwzIc2bBgWuAo8snLmxSA996vaILfQLo"; // 여기에 Google Geocoding API 키를 추가하세요
+const GOOGLE_API_KEY = "AIzaSyD-9hjx1lazu7-OKtC6q4yqtGODGAMxva4"; // 여기에 Google Geocoding API 키를 추가하세요
 
 export default function WritePageScreen({ navigation }) {
   const [text, setText] = useState(""); // 글 내용 상태
@@ -72,6 +72,7 @@ export default function WritePageScreen({ navigation }) {
         currentLocation.coords
       );
       setCurrentLocation(geocodedAddress); // 변환된 주소 설정
+
     } catch (error) {
       console.error(error);
     }
@@ -84,6 +85,7 @@ export default function WritePageScreen({ navigation }) {
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${coords.latitude},${coords.longitude}&key=${GOOGLE_API_KEY}`
       );
       const data = await response.json();
+
       if (data.results && data.results.length > 0) {
         // 반환된 주소 중 첫 번째 항목을 사용
         return data.results[0].formatted_address;
@@ -105,6 +107,13 @@ export default function WritePageScreen({ navigation }) {
       }
     };
 
+    setText("");
+    setImages([]);
+    setCurrentIndex(0);
+    setDaysLater(1);
+    setLocation(null);
+    setCurrentLocation("");
+  
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -116,18 +125,6 @@ export default function WritePageScreen({ navigation }) {
     requestPermissions();
     getLocation();
   }, []);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      // 화면에 포커스가 들어올 때 실행
-      setText("");
-      setImages([]);
-      setCurrentIndex(0);
-      setDaysLater(1);
-      setLocation(null);
-      setCurrentLocation("");
-    }, [])
-  );
 
   // 타임캡슐 저장 핸들러 (fetch 사용)
   const saveCapsule = async () => {
@@ -160,8 +157,8 @@ export default function WritePageScreen({ navigation }) {
       images.forEach((imageUri) => {
         formData.append("file", {
           uri: imageUri,
-          type: "image/jpeg",
-          name: "post.jpg",
+          type: "image/png",
+          name: "post.png",
         });
       });
 
@@ -187,7 +184,6 @@ export default function WritePageScreen({ navigation }) {
         navigation.navigate("Home");
       } else {
         console.log("서버 오류:", responseText);
-        Alert.alert("오류", `이미지가 있어야 합니다.`);
       }
     } catch (error) {
       console.error("서버 오류:", error);
