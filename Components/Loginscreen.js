@@ -61,7 +61,7 @@ function Loginscreen({ navigation }) {
             ["refreshToken", refreshToken],
             ["userId", responseData.data.user.userId.toString()],
           ]);
-          navigation.navigate("ProfileCreate");
+          navigation.replace("ProfileCreate");
         } else if (response.status === 200) {
           // 이미 생성된 계정인 경우
           const { accessToken, refreshToken } = responseData.data.token;
@@ -70,7 +70,7 @@ function Loginscreen({ navigation }) {
             ["refreshToken", refreshToken],
             ["userId", responseData.data.user.userId.toString()],
           ]);
-          navigation.navigate("MainContainer");
+          navigation.replace("MainContainer");
         } else {
           Alert.alert("오류", `${responseData.message}`);
         }
@@ -123,7 +123,7 @@ function Loginscreen({ navigation }) {
             ["refreshToken", refreshToken],
             ["userId", responseData.data.user.userId.toString()],
           ]);
-          navigation.navigate("ProfileCreate");
+          navigation.replace("ProfileCreate");
         } else if (response.status === 200) {
           // 이미 생성된 계정인 경우
           const { accessToken, refreshToken } = responseData.data.token;
@@ -132,7 +132,7 @@ function Loginscreen({ navigation }) {
             ["refreshToken", refreshToken],
             ["userId", responseData.data.user.userId.toString()],
           ]);
-          navigation.navigate("MainContainer");
+          navigation.replace("MainContainer");
         } else {
           Alert.alert("오류", `${responseData.message}`);
         }
