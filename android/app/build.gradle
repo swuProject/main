@@ -126,9 +126,9 @@ android {
         }
         release {
             storeFile file('release.keystore') // 생성한 키스토어 파일명 입력
-            storePassword 'asd098'           // 키스토어 비밀번호 입력
+            storePassword 'asd098!'           // 키스토어 비밀번호 입력
             keyAlias 'androidreleasekey'                        // 키스토어 alias 입력
-            keyPassword 'asd098'                  // 키 비밀번호 입력
+            keyPassword 'asd098!'                  // 키 비밀번호 입력
         }
     }
     }
