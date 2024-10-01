@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useFocusEffect } from "@react-navigation/native"; // useFocusEffect 추가
 import {
   View,
   TextInput,
@@ -115,6 +116,18 @@ export default function WritePageScreen({ navigation }) {
     requestPermissions();
     getLocation();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      // 화면에 포커스가 들어올 때 실행
+      setText("");
+      setImages([]);
+      setCurrentIndex(0);
+      setDaysLater(1);
+      setLocation(null);
+      setCurrentLocation("");
+    }, [])
+  );
 
   // 타임캡슐 저장 핸들러 (fetch 사용)
   const saveCapsule = async () => {

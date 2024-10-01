@@ -382,7 +382,7 @@ const Item = ({
   const [expanded, setExpanded] = useState(false);
   const [liked, setLiked] = useState(initialLiked); // 좋아요 상태 초기화
   const [modalVisible, setModalVisible] = useState(false);
-  const [visitCount, setVisitCount] = useState(0);
+  //const [visitCount, setVisitCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState([]);
   const [commentCount, setCommentCount] = useState(0);
@@ -390,8 +390,8 @@ const Item = ({
 
   useEffect(() => {
     const fetchVisitCount = async () => {
-      const count = await GetVisitCount(capsuleId);
-      setVisitCount(count);
+      //const count = await GetVisitCount(capsuleId);
+      //setVisitCount(count);
     };
 
     const fetchLikeCount = async () => {
@@ -406,7 +406,7 @@ const Item = ({
     };
 
     fetchCommentCount();
-    fetchVisitCount();
+    //fetchVisitCount();
     fetchLikeCount();
   }, [capsuleId]);
 
