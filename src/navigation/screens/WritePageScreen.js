@@ -32,6 +32,19 @@ export default function WritePageScreen({ navigation }) {
 
   const base_url = "https://tuituiworld.store:8443";
 
+  useFocusEffect(
+    React.useCallback(() => {
+      // 화면에 포커스가 맞춰질 때 실행되는 코드
+      // 상태 초기화
+      setText("");
+      setImages([]);
+      setCurrentIndex(0);
+      setDaysLater(1);
+      setLocation(null);
+      setCurrentLocation("");
+    }, [])
+  );
+
   // 이미지 선택 핸들러
   const selectImage = async () => {
     const permissionResult =
@@ -72,7 +85,6 @@ export default function WritePageScreen({ navigation }) {
         currentLocation.coords
       );
       setCurrentLocation(geocodedAddress); // 변환된 주소 설정
-
     } catch (error) {
       console.error(error);
     }
@@ -113,7 +125,7 @@ export default function WritePageScreen({ navigation }) {
     setDaysLater(1);
     setLocation(null);
     setCurrentLocation("");
-  
+
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
         shouldShowAlert: true,
@@ -125,6 +137,13 @@ export default function WritePageScreen({ navigation }) {
     requestPermissions();
     getLocation();
   }, []);
+
+  const handlePostSubmit = () => {
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "CameraScreen" }], // CameraScreen을 스택의 첫 화면으로 설정
+    });
+  };
 
   // 타임캡슐 저장 핸들러 (fetch 사용)
   const saveCapsule = async () => {
@@ -180,8 +199,7 @@ export default function WritePageScreen({ navigation }) {
 
       if (response.ok) {
         setNotification(daysLater); // 저장 후 타임캡슐 알림 호출
-
-        navigation.navigate("Home");
+        handlePostSubmit(); // 홈 화면 이동
       } else {
         console.log("서버 오류:", responseText);
       }

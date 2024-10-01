@@ -45,7 +45,7 @@ const CameraStackScreen = () => {
       <CameraStack.Screen
         name="CameraActive"
         component={CameraActive}
-        options={{ 
+        options={{
           title: "Camera Active",
           headerShown: false,
         }}
