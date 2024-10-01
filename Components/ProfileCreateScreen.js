@@ -124,7 +124,7 @@ function ProfileCreateScreen({ navigation }) {
         await AsyncStorage.setItem("profileId", profileId.toString());
   
         Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
-        navigation.navigate("MainContainer");
+        navigation.replace("MainContainer");
       } else {
         Alert.alert("오류", responseData.message || "프로필 생성 중 오류가 발생했습니다.");
       }
