@@ -8,23 +8,47 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Linking,
+  Alert,
 } from "react-native";
+import * as Location from "expo-location";
 
 const TourScreen = () => {
   const [tourData, setTourData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [location, setLocation] = useState(null);
 
   useEffect(() => {
-    fetchTourData(page);
+    (async () => {
+      // 위치 권한 요청
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("위치 권한이 필요합니다.");
+        return;
+      }
+
+      // 유저의 현재 위치 가져오기
+      let loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc.coords); // 위치 정보 설정
+
+      if (loc.coords) {
+        fetchTourData(page, loc.coords.latitude, loc.coords.longitude);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (location) {
+      fetchTourData(page, location.latitude, location.longitude);
+    }
   }, [page]);
 
-  const fetchTourData = async (pageNum) => {
+  const fetchTourData = async (pageNum, latitude, longitude) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://jy3lh3sugl.execute-api.ap-northeast-2.amazonaws.com/default/suggested_tour_list?latitude=37.568477&longitude=126.981611&numOfRows=4&page=${pageNum}`
+        `https://jy3lh3sugl.execute-api.ap-northeast-2.amazonaws.com/default/suggested_tour_list?latitude=${latitude}&longitude=${longitude}&numOfRows=4&page=${pageNum}`
       );
       const data = await response.json();
       setTourData((prevData) => [...prevData, ...data.result]); // 이전 데이터에 새 데이터를 추가
