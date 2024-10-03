@@ -72,13 +72,13 @@ function Loginscreen({ navigation }) {
           ]);
           navigation.replace("MainContainer");
         } else {
-          Alert.alert("오류", `${responseData.message}`);
+          Alert.alert("오류", `다른 기기에서 이미 로그인이 되어 있습니다.`);
         }
       } else {
-        throw new Error("Kakao login failed.");
+        throw new Error("카카오 로그인 실패 (관리자에게 문의해주세요)");
       }
     } catch (err) {
-        console.log(err);
+      Alert.alert("오류", "카카오 로그인에 실패 (관리자에게 문의해주세요)");
     } finally {
       setKakaoLoading(false);
     }
@@ -134,14 +134,13 @@ function Loginscreen({ navigation }) {
           ]);
           navigation.replace("MainContainer");
         } else {
-          Alert.alert("오류", `${responseData.message}`);
+          Alert.alert("오류", `다른 기기에 이미 로그인이 되어 있습니다.`);
         }
       } else {
-        throw new Error("Naver login failed.");
+        throw new Error("네이버 로그인 실패 (관리자에게 문의해주세요)");
       }
     } catch (err) {
-      console.error("Naver 로그인 에러:", err);
-      Alert.alert("로그인 실패", "Naver 로그인에 실패했습니다.");
+      Alert.alert("오류", "네이버 로그인에 실패 (관리자에게 문의해주세요)");
     } finally {
       setNaverLoading(false);
     }
