@@ -21,10 +21,10 @@ const TourScreen = () => {
     // 유저 위치 받아오기
     Geolocation.getCurrentPosition(
       (position) => {
-        // position.coords.latitude
-        setLatitude(37.6035);
-        // position.coords.longitude
-        setLongitude(126.766);
+        //
+        setLatitude(position.coords.latitude);
+        //
+        setLongitude(position.coords.longitude);
       },
       (error) => {
         console.error(error);
