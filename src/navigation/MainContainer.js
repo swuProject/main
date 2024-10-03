@@ -15,7 +15,7 @@ import HomeScreen from "./screens/HomeScreen";
 import MapScreen from "./screens/MapScreen";
 import CameraScreen from "./screens/CameraScreen/CameraScreen";
 import CameraActive from "./screens/CameraScreen/CameraActive";
-import AlarmScreen from "./screens/AlarmScreen";
+import ChatScreen from "./screens/ChatScreen";
 import FindScreen from "./screens/FindScreen";
 import ProfileScreen from "./screens/ProfileScreen/ProfileScreen";
 import ProfileOptionScreen from "./screens/ProfileScreen/PrifileOptionScreen";
@@ -27,7 +27,7 @@ import CameraStackScreen from "./screens/CameraScreen/CameraScreen";
 const homeName = "home";
 const mapName = "Map";
 const cameraName = "Camera";
-const alarmName = "Alarm";
+const chatName = "Chat";
 const findName = "Find";
 
 // navigatorStack
@@ -158,8 +158,8 @@ const MainContainer = () => {
             iconName = focused ? "location-outline" : "location-outline";
           } else if (rn === cameraName) {
             iconName = focused ? "camera-outline" : "camera-outline";
-          } else if (rn === alarmName) {
-            iconName = focused ? "notifications-outline" : "notifications-outline";
+          } else if (rn === chatName) {
+            iconName = focused ? "chatbox-ellipses-outline" : "chatbox-ellipses-outline";
           } else if (rn === findName) {
             iconName = focused ? "search-outline" : "search-outline";
           }
@@ -183,7 +183,7 @@ const MainContainer = () => {
         component={CameraStackScreen}
         options={{ headerShown: false }}
       />
-      <Tab.Screen name={alarmName} component={AlarmScreen} />
+      <Tab.Screen name={chatName} component={ChatScreen} />
       <Tab.Screen 
         name={findName} 
         component={FindScreen} 
