@@ -2,6 +2,6 @@
   <string name="app_name">TuiTui</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
-  <string name="kakao_app_key">56372e49a12d1a4267d174d8d5bf3f5b</string>
+  <string name="kakao_app_key">016847a5f3ba9da983203708ab13bd07</string>
   <string name="naver_scheme">[NAVER_SERVICE_URL_SCHEME]</string>
 </resources>

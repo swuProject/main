@@ -36,12 +36,7 @@ function Loginscreen({ navigation }) {
       if (result) {
         const profile = await getKakaoProfile();
         await AsyncStorage.multiSet([
-          ["name", profile.name || ""],
-          ["phone", profile.phoneNumber || ""],
           ["account", profile.email || ""],
-          ["birthyear", profile.birthyear || ""],
-          ["birthday", profile.birthday || ""],
-          ["gender", profile.gender || ""],
         ]);
         const email = encodeURIComponent(profile.email);
         const token = encodeURIComponent(result.accessToken);
@@ -94,12 +89,7 @@ function Loginscreen({ navigation }) {
         const profileResult = await NaverLogin.getProfile(accessToken);
 
         await AsyncStorage.multiSet([
-          ["name", profileResult.response.name || ""],
-          ["phone", profileResult.response.mobile || ""],
           ["account", profileResult.response.email || ""],
-          ["birthyear", profileResult.response.birthyear || ""],
-          ["birthday", profileResult.response.birthday || ""],
-          ["gender", profileResult.response.gender || ""],
         ]);
 
         const email = encodeURIComponent(profileResult.response.email);

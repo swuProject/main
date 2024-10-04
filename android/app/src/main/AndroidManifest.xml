@@ -28,7 +28,7 @@
           <action android:name="android.intent.action.VIEW" />
           <category android:name="android.intent.category.DEFAULT" />
           <category android:name="android.intent.category.BROWSABLE" />
-          <data android:host="oauth" android:scheme="kakao56372e49a12d1a4267d174d8d5bf3f5b" />
+          <data android:host="oauth" android:scheme="kakao016847a5f3ba9da983203708ab13bd07" />
       </intent-filter>
     </activity>
     <!-- Naver SDK 설정 -->   

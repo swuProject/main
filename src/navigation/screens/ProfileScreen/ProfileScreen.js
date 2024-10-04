@@ -84,6 +84,7 @@ const ProfileScreen = () => {
 
         // AsyncStorage에 프로필 정보 저장
         await AsyncStorage.setItem('profileId', JSON.stringify(profileId));
+        await AsyncStorage.setItem('name', name);
         await AsyncStorage.setItem('nickname', nickname);
         await AsyncStorage.setItem('describeSelf', describeSelf);
 

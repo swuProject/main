@@ -2,14 +2,13 @@ import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { launchImageLibrary } from 'react-native-image-picker';
-import { refreshToken } from "./refreshToken";
 
 function ProfileCreateScreen({ navigation }) {
   const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
   const [account, setAccount] = useState("");
-  const [birthyear, setBirthyear] = useState("");
-  const [birthday, setBirthday] = useState("");
+  const [birthYear, setBirthYear] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthDay, setBirthDay] = useState("");
   const [gender, setGender] = useState("");
   const [profileImgPath, setProfileImgPath] = useState("");
   const [nickname, setNickname] = useState("");
@@ -18,32 +17,12 @@ function ProfileCreateScreen({ navigation }) {
   useEffect(() => {
     const loadProfileData = async () => {
       try {
-        const storedName = await AsyncStorage.getItem("name");
-        const storedPhone = await AsyncStorage.getItem("phone");
         const storedAccount = await AsyncStorage.getItem("account");
-        const storedBirthyear = await AsyncStorage.getItem("birthyear");
-        const storedBirthday = await AsyncStorage.getItem("birthday");
-        const storedGender = await AsyncStorage.getItem("gender");
-        const storedNickname = await AsyncStorage.getItem("nickname");
-        const storedDescribeSelf = await AsyncStorage.getItem("describeSelf");
-
-        setName(storedName || "");
-        setPhone(storedPhone || "");
-        setAccount(storedAccount || "");
-        setBirthyear(storedBirthyear || "");
-        setBirthday(storedBirthday || "");
-        setGender(
-          storedGender === "male" || storedGender === "M" || storedGender === "MALE" ? "MALE" : 
-          storedGender === "female" || storedGender === "F" || storedGender === "FEMALE" ? "FEMALE" : ""
-        );        
-        setProfileImgPath("");
-        setNickname(storedNickname || "");
-        setdescribeSelf(storedDescribeSelf || "");
+        setAccount(storedAccount);
       } catch (error) {
-        console.error("프로필 데이터를 불러오는 데 실패했습니다.", error);
+        console.error("이메일을 불러오는데 실패했습니다.", error);
       }
     };
-
     loadProfileData();
   }, []);
 
@@ -60,7 +39,8 @@ function ProfileCreateScreen({ navigation }) {
   };
 
   const handleSubmit = async () => {
-    if (!nickname || !describeSelf) {
+    const birth = `${birthYear}-${birthMonth}-${birthDay}`; // 생년월일을 YYYY-MM-DD 형식으로 결합
+    if (!name || !birth || !nickname || !gender) {
       Alert.alert("오류", "입력란을 모두 채워주세요.");
       return;
     }
@@ -71,18 +51,17 @@ function ProfileCreateScreen({ navigation }) {
   
       if (!userId) {
         Alert.alert("오류", "로그인이 필요합니다.");
-        navigation.navigate("Login");
+        navigation.replace("Login");
         return;
       }
   
       const profileData = {
         userId,
         name,
-        phone,
         nickname,
         describeSelf,
         gender,
-        birthDate: formatDate(),
+        birth,
       };
   
       let response;
@@ -117,6 +96,7 @@ function ProfileCreateScreen({ navigation }) {
       }
   
       const responseData = await response.json();
+      console.log(responseData.message);
   
       if (response.ok) {
         // profileId 저장
@@ -126,7 +106,7 @@ function ProfileCreateScreen({ navigation }) {
         Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
         navigation.replace("MainContainer");
       } else {
-        Alert.alert("오류", responseData.message || "프로필 생성 중 오류가 발생했습니다.");
+        Alert.alert("오류", responseData.data.name || responseData.data.nickname || "알 수 없는 오류");
       }
   
     } catch (error) {
@@ -156,20 +136,26 @@ function ProfileCreateScreen({ navigation }) {
     });
   };
 
-  const formatDate = () => {
-    if (birthyear && birthday) {
-      if (birthday.length === 4) {
-        const month = birthday.slice(0, 2);
-        const day = birthday.slice(2, 4);
-        return `${birthyear}-${month}-${day}`;
-      } else if (birthday.includes("-")) {
-        const [month, day] = birthday.split("-");
-        return `${birthyear}-${month}-${day}`;
-      }
-    }
-    return "";
+  // 성별 선택 버튼
+  const renderGenderButton = () => {
+    return (
+      <View style={styles.genderContainer}>
+        <TouchableOpacity
+          style={[styles.genderButton, gender === 'MALE' && styles.genderButtonSelected]}
+          onPress={() => setGender("MALE")}
+        >
+          <Text style={styles.genderButtonText}>남성</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.genderButton, gender === 'FEMALE' && styles.genderButtonSelected]}
+          onPress={() => setGender("FEMALE")}
+        >
+          <Text style={styles.genderButtonText}>여성</Text>
+        </TouchableOpacity>
+      </View>
+    );
   };
-  
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <TouchableOpacity onPress={handleImagePicker}>
@@ -181,20 +167,6 @@ function ProfileCreateScreen({ navigation }) {
       </TouchableOpacity>
 
       <View style={styles.infoGroup}>
-        <Text style={styles.label}>이름</Text>
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>{name}</Text>
-        </View>
-      </View>
-
-      <View style={styles.infoGroup}>
-        <Text style={styles.label}>전화번호</Text>
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>{phone}</Text>
-        </View>
-      </View>
-
-      <View style={styles.infoGroup}>
         <Text style={styles.label}>이메일</Text>
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>{account}</Text>
@@ -202,17 +174,50 @@ function ProfileCreateScreen({ navigation }) {
       </View>
 
       <View style={styles.infoGroup}>
+        <Text style={styles.label}>이름</Text>
+        <View style={styles.inputBox}>
+          <TextInput
+            style={styles.inputText}
+            value={name}
+            placeholder="이름을 입력해 주세요."
+            onChangeText={setName}
+          />
+        </View>
+      </View>
+
+      <View style={styles.infoGroup}>
         <Text style={styles.label}>생년월일</Text>
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>{formatDate()}</Text>
+        <View style={styles.birthContainer}>
+          <TextInput
+            style={styles.birthInput}
+            value={birthYear}
+            placeholder="YYYY"
+            maxLength={4}
+            keyboardType="numeric"
+            onChangeText={setBirthYear}
+          />
+          <TextInput
+            style={styles.birthInput}
+            value={birthMonth}
+            placeholder="MM"
+            maxLength={2}
+            keyboardType="numeric"
+            onChangeText={setBirthMonth}
+          />
+          <TextInput
+            style={styles.birthInput}
+            value={birthDay}
+            placeholder="DD"
+            maxLength={2}
+            keyboardType="numeric"
+            onChangeText={setBirthDay}
+          />
         </View>
       </View>
 
       <View style={styles.infoGroup}>
         <Text style={styles.label}>성별</Text>
-        <View style={styles.infoBox}>
-          <Text style={styles.infoText}>{gender}</Text>
-        </View>
+        {renderGenderButton(gender)}
       </View>
 
       <View style={styles.infoGroup}>
@@ -298,23 +303,58 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   buttonText: {
-    color: "white",
     fontSize: 18,
-    fontWeight: "bold",
+    color: "#fff",
   },
   profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginTop: 20,
-    marginBottom: 10,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 20,
   },
   placeholderImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: "#ccc",
     marginBottom: 20,
+  },
+  genderContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 10,
+  },
+  genderButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    width: "45%",
+    alignItems: "center",
+  },
+  genderButtonSelected: {
+    backgroundColor: "#4F8BFF",
+    borderColor: "#4F8BFF",
+  },
+  genderButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  birthContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  birthInput: {
+    flex: 1,
+    marginHorizontal: 5,
+    borderColor: "#ccc",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: "#fff",
+    textAlign: "center",
+    fontSize: 16,
   },
 });
 
