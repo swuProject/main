@@ -75,6 +75,7 @@ const App = () => {
           component={DeleteUserScreen}
           options={{
             title: "탈퇴하기",
+            headerTitleAlign: 'center',
             headerTitleStyle: {
               fontSize: 24,
               fontWeight: "bold",
@@ -95,6 +96,7 @@ const App = () => {
           component={LogoutScreen}
           options={{
             title: "로그아웃",
+            headerTitleAlign: 'center',
             headerTitleStyle: {
               fontSize: 24,
               fontWeight: "bold",

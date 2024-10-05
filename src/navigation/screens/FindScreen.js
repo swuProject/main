@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function FindScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,16 +97,19 @@ export default function FindScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.searchInput}
-        placeholder="유저 이름을 검색하세요"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        onSubmitEditing={handleSearchSubmit}
-        autoCapitalize="none"
-        autoCorrect={false}
-        returnKeyType="search"
-      />
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="유저 닉네임을 검색하세요"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearchSubmit}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="search"
+        />
+        <Icon name="search" size={24} color="gray" style={styles.searchIcon} />
+      </View>
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" style={styles.loader} />
       ) : (
@@ -136,14 +140,18 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
   },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    marginBottom: 10,
+  },
   searchInput: {
+    flex: 1,
     height: 40,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginTop: 16,
-    marginBottom: 16,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 20,
+    paddingHorizontal: 15,
   },
   userItem: {
     flexDirection: "row",
@@ -173,5 +181,9 @@ const styles = StyleSheet.create({
   },
   loader: {
     marginTop: 20,
+  },
+  searchIcon: {
+    position: 'absolute',
+    right: 20,
   },
 });

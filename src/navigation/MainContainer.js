@@ -101,6 +101,7 @@ const HomeStackScreen = ({ navigation }) => {
         component={ProfileFixScreen}
         options={{
           title: "프로필 수정",
+          headerTitleAlign: 'center',
           headerTitleStyle: {
             fontSize: 24,
             fontWeight: "bold",
@@ -121,6 +122,7 @@ const HomeStackScreen = ({ navigation }) => {
         component={ProfileOptionScreen}
         options={{
           title: "설정",
+          headerTitleAlign: 'center',
           headerTitleStyle: {
             fontSize: 24,
             fontWeight: "bold",
@@ -145,7 +147,7 @@ const MainContainer = () => {
     <Tab.Navigator
       initialRouteName={homeName}
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: "#89a6fc",
+        tabBarActiveTintColor: "black",
         tabBarInactiveTintColor: "#000000",
         tabBarShowLabel: false,
         tabBarIcon: ({ focused, color, size }) => {
@@ -153,15 +155,15 @@ const MainContainer = () => {
           let rn = route.name;
 
           if (rn === homeName) {
-            iconName = focused ? "home-outline" : "home-outline";
+            iconName = focused ? "home" : "home-outline";
           } else if (rn === mapName) {
-            iconName = focused ? "location-outline" : "location-outline";
+            iconName = focused ? "location" : "location-outline";
           } else if (rn === cameraName) {
-            iconName = focused ? "camera-outline" : "camera-outline";
+            iconName = focused ? "camera" : "camera-outline";
           } else if (rn === chatName) {
-            iconName = focused ? "chatbox-ellipses-outline" : "chatbox-ellipses-outline";
+            iconName = focused ? "chatbox-ellipses" : "chatbox-ellipses-outline";
           } else if (rn === findName) {
-            iconName = focused ? "search-outline" : "search-outline";
+            iconName = focused ? "search" : "search-outline";
           }
 
           return <Ionicons name={iconName} size={size} color={color} />;

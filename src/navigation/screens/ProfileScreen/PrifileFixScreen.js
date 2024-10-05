@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   headerButtonText: {
-    color: "#4F8BFF",
+    color: "black",
     fontSize: 18,
     marginRight: 10,
     fontWeight: 'bold',

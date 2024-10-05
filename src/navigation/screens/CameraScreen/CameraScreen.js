@@ -55,6 +55,11 @@ const CameraStackScreen = () => {
         component={WritePage}
         options={{
           title: "타임캡슐 작성",
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontSize: 24,
+            fontWeight: "bold",
+          },
           headerBackTitleVisible: false, // 뒤로 가기 버튼의 텍스트를 숨김
           headerBackImage: () => (
             <Ionicons
@@ -82,14 +87,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   postButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "black",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
     marginBottom: 10,
   },
   cameraButton: {
-    backgroundColor: "#FF3B30",
+    backgroundColor: "black",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,

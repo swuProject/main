@@ -5,12 +5,10 @@ import {
   FlatList,
   StyleSheet,
   Text,
-  StatusBar,
   ActivityIndicator,
   Image,
   TouchableOpacity,
   Modal,
-  Button,
   TextInput,
   RefreshControl,
 } from "react-native";
@@ -538,9 +536,12 @@ const Item = ({
               value={newComment}
               onChangeText={setNewComment}
               placeholder="댓글을 입력하세요"
+              onSubmitEditing={handleSaveComment} // 엔터 누르면 댓글 저장
+            returnKeyType="send" // 키보드의 "엔터"를 "send" 버튼으로 설정
             />
-            <Button title="댓글 저장" onPress={handleSaveComment} />
-            <Button title="닫기" onPress={handleCloseModal} />
+            <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+              <Text style={styles.buttonText}>닫기</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -690,7 +691,6 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: StatusBar.currentHeight || 0,
     backgroundColor: "white",
   },
   item: {
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     width: "100%",
-    height: "60%",
+    height: "70%",
   },
   commentItem: {
     flexDirection: "row",
@@ -789,12 +789,24 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   commentInput: {
-    height: 40,
-    borderColor: "gray",
-    borderWidth: 1,
+    height: 44,
+    borderColor: "#BBB",
+    borderWidth: 0.5,
+    borderRadius: 10,
     marginTop: 10,
-    marginBottom: 10,
-    paddingLeft: 8,
+    marginBottom: 8,
+    paddingLeft: 10,
+  },
+  closeButton: {
+    backgroundColor: '#000',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 18,
   },
 });
 
