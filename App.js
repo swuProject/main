@@ -3,6 +3,7 @@ import "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import { TextDecoder, TextEncoder } from 'text-encoding';
 
 import SplashScreen from "./Components/SplashScreen";
 import Loginscreen from "./Components/Loginscreen";
@@ -19,6 +20,13 @@ import ProfileinfoScreen from "./src/navigation/screens/ProfileScreen/Profileinf
 
 import ChatScreen from "./src/navigation/screens/ChatScreen";
 import ChatroomScreen from "./src/navigation/ChatroomScreen";
+
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = TextDecoder;
+}
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = TextEncoder;
+}
 
 const Stack = createStackNavigator();
 

@@ -139,7 +139,12 @@ const ChatScreen = () => {
   );
 
   const renderChatRoom = ({ item }) => (
-    <TouchableOpacity style={styles.chatRoom} onPress={() => navigation.navigate('ChatroomScreen', { chatRoomId: item.guestProfileNickname, chatRoomImage: item.guestProfileImage })}>
+    <TouchableOpacity style={styles.chatRoom} onPress={() => navigation.navigate('ChatroomScreen', { 
+      chatRoomId: item.chatRoomId, 
+      chatRoomName: item.guestProfileNickname, 
+      chatRoomImage: item.guestProfileImage,
+      guestProfileId: item.guestProfileId, 
+      })}>
       <Image source={{ uri: item.guestProfileImage }} style={styles.avatar} />
       <Text style={styles.chatRoomName}>{item.guestProfileNickname} 님과의 대화</Text>
     </TouchableOpacity>
