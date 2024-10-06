@@ -131,14 +131,8 @@ export default function FindScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 20,
     backgroundColor: "#fff",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 16,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -184,6 +178,6 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     position: 'absolute',
-    right: 20,
+    right: 10,
   },
 });

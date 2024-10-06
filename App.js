@@ -1,4 +1,3 @@
-// 로그인 화면
 import React from "react";
 import "react-native-gesture-handler";
 import { NavigationContainer } from "@react-navigation/native";
@@ -17,6 +16,9 @@ import ProfileOptionScreen from "./src/navigation/screens/ProfileScreen/PrifileO
 import ProfileScreen from "./src/navigation/screens/ProfileScreen/ProfileScreen";
 import ProfileFixScreen from "./src/navigation/screens/ProfileScreen/PrifileFixScreen";
 import ProfileinfoScreen from "./src/navigation/screens/ProfileScreen/ProfileinfoScreen";
+
+import ChatScreen from "./src/navigation/screens/ChatScreen";
+import ChatroomScreen from "./src/navigation/ChatroomScreen";
 
 const Stack = createStackNavigator();
 
@@ -119,6 +121,26 @@ const App = () => {
         <Stack.Screen 
           name="ProfileFixScreen" 
           component={ProfileFixScreen} 
+        />
+        <Stack.Screen 
+          name="Chat" 
+          component={ChatScreen} 
+        />
+        <Stack.Screen 
+          name="ChatroomScreen" 
+          component={ChatroomScreen} 
+          options={{
+            title: "",
+            headerBackImage: () => (
+              <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
+                style={{ paddingLeft: 10 }}
+              />
+            ),
+            headerBackTitleVisible: false,
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>

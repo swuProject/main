@@ -1,73 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, TextInput, FlatList } from 'react-native';
-import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, TextInput, Image, Text } from 'react-native';
 
-const ChatroomScreen = () => {
+const ChatroomScreen = ({ route, navigation }) => {
+  const { chatRoomId, chatRoomImage } = route.params;
   const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([]);
-  const [client, setClient] = useState(null);
 
   useEffect(() => {
-    // SockJS를 사용하여 STOMP 클라이언트 생성
-    const socket = new SockJS('http://your-server-url/sockjs');
-    const stompClient = new Client({
-      webSocketFactory: () => socket,
-      debug: (str) => console.log(str),  // 디버깅 정보 출력
-      reconnectDelay: 5000,  // 재연결 딜레이
+    navigation.setOptions({
+      headerTitle: () => (
+        <View style={styles.headerContainer}>
+          <Image source={{ uri: chatRoomImage }} style={styles.headerImage} />
+          <Text style={styles.headerTitle}>{chatRoomId}</Text>
+        </View>
+      ),
     });
+  }, [chatRoomId, chatRoomImage, navigation]);
 
-    // 연결 성공 시 실행
-    stompClient.onConnect = (frame) => {
-      console.log('Connected: ' + frame);
-
-      // 서버에서 메시지 수신
-      stompClient.subscribe('/topic/messages', (messageOutput) => {
-        const newMessage = JSON.parse(messageOutput.body);
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-      });
-    };
-
-    // 연결 시도
-    stompClient.activate();
-    setClient(stompClient);
-
-    return () => {
-      stompClient.deactivate();  // 컴포넌트가 언마운트 될 때 연결 해제
-    };
-  }, []);
-
-  // 메시지 전송
-  const sendMessage = () => {
-    if (client && client.connected && message) {
-      const newMessage = { text: message, sender: 'user' };
-      client.publish({
-        destination: '/app/chat',  // 서버에서 처리할 엔드포인트
-        body: JSON.stringify(newMessage),
-      });
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-      setMessage('');
-    }
+  const handleSendMessage = () => {
+    // 메시지 전송 로직 추가
+    console.log(`메시지 전송: ${message}`);
+    setMessage(''); // 입력 필드 초기화
   };
 
   return (
-    <View style={{ flex: 1, padding: 10 }}>
-      <FlatList
-        data={messages}
-        renderItem={({ item }) => (
-          <Text>{item.sender}: {item.text}</Text>
-        )}
-        keyExtractor={(item, index) => index.toString()}
-      />
-      <TextInput
-        value={message}
-        onChangeText={setMessage}
-        placeholder="Enter your message"
-        style={{ borderWidth: 1, padding: 10 }}
-      />
-      <Button title="Send" onPress={sendMessage} />
+    <View style={styles.container}>
+      {/* 채팅 내용을 표시하는 컴포넌트 추가 */}
+      <View style={styles.chatContent}>
+        {/* 채팅 메시지 표시 영역을 여기에 추가할 수 있습니다. */}
+      </View>
+
+      {/* 메시지 입력 칸 */}
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="메시지를 입력하세요."
+          value={message}
+          onChangeText={setMessage}
+          onSubmitEditing={handleSendMessage}
+          returnKeyType="send"
+        />
+      </View>
     </View>
   );
 };
 
-export default ChatScreen;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  chatContent: {
+    flex: 1,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  input: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 25,
+    padding: 8,
+    paddingLeft: 10,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
+
+export default ChatroomScreen;

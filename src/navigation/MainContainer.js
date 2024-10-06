@@ -35,7 +35,7 @@ const Tab = createBottomTabNavigator();
 const HomeStack = createStackNavigator();
 const MapStack = createStackNavigator();
 const CameraStack = createStackNavigator();
-const AlramStack = createStackNavigator();
+const ChatStack = createStackNavigator();
 const FindStack = createStackNavigator();
 
 // 홈 스택화면 (프로필 화면)
@@ -185,7 +185,11 @@ const MainContainer = () => {
         component={CameraStackScreen}
         options={{ headerShown: false }}
       />
-      <Tab.Screen name={chatName} component={ChatScreen} />
+      <Tab.Screen 
+        name={chatName} 
+        component={ChatScreen}
+        options={{ headerShown: false }} 
+      />
       <Tab.Screen 
         name={findName} 
         component={FindScreen} 
