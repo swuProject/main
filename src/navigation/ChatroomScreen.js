@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, } from 'react';
 import { View, StyleSheet, TextInput, Image, Text, FlatList, TouchableOpacity, } from 'react-native';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
@@ -10,6 +10,8 @@ const ChatroomScreen = ({ route, navigation }) => {
   const [chatMessages, setChatMessages] = useState([]);
   const [client, setClient] = useState(null);
   const [profileId, setProfileId] = useState(null);
+
+  const flatListRef = useRef(null);
 
   useEffect(() => {
     // AsyncStorage에서 사용자 ID 가져오기
@@ -89,6 +91,13 @@ const ChatroomScreen = ({ route, navigation }) => {
     }
   };
 
+  useEffect(() => {
+    // 새로운 메시지가 추가될 때마다 FlatList를 아래로 스크롤합니다.
+    if (flatListRef.current) {
+      flatListRef.current.scrollToEnd({ animated: true });
+    }
+  }, [chatMessages]); // chatMessages가 변경될 때마다 실행
+
   const renderMessageItem = ({ item }) => {
     const isSender = item.senderProfileId == profileId; // 현재 사용자와 메시지 발신자 비교
   
@@ -106,6 +115,7 @@ const ChatroomScreen = ({ route, navigation }) => {
     <View style={styles.container}>
       {/* 채팅 내용을 표시하는 FlatList */}
       <FlatList
+        ref={flatListRef}
         data={chatMessages}
         renderItem={renderMessageItem}
         keyExtractor={(item) => item.id}
@@ -171,13 +181,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginVertical: 5,
     maxWidth: '80%',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
     backgroundColor: '#8a8a8a', 
-    borderWidth: 1,
-    borderColor: '#fff',
   },
   messageSender: {
     backgroundColor: '#8a8a8a', // 발신자 메시지 색상
