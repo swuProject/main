@@ -33,16 +33,49 @@ const ChatroomScreen = ({ route, navigation }) => {
   }, [chatRoomName, chatRoomImage, navigation]);
 
   useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        const response = await fetch(
+          `https://tuituiworld.store:8444/api/chat/rooms/${chatRoomId}/messages?pageNo=0&pageSize=100&sortBy=createdAt`,
+          {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+    
+        if (response.ok) {
+          const savedMessages = await response.json();
+          if (savedMessages && savedMessages.data && savedMessages.data.contents) {
+            setChatMessages(savedMessages.data.contents); // 데이터 구조에 맞게 수정
+          } else {
+            console.error('메시지 데이터가 없습니다.');
+          }
+        } else {
+          console.log('메시지를 불러오지 못했습니다:', response.status);
+        }
+      } catch (error) {
+        console.error('API 요청 중 오류 발생:', error);
+      }
+    };
+  
+    fetchMessages(); 
+  }, [chatRoomId]);  
+
+  useEffect(() => {
     // WebSocket 클라이언트 설정
     const stompClient = new Client({
       webSocketFactory: () => new SockJS('https://tuituiworld.store:8444/ws-stomp'),
       debug: (str) => {
-        console.log(str);
+        //console.log(str);
       },
       reconnectDelay: 5000,
       onConnect: () => {
         console.log('Connected');
-        console.log(`Current chatRoomId: ${chatRoomId}`);
+        //console.log(`Current chatRoomId: ${chatRoomId}`);
         stompClient.subscribe(`/sub/chat/room/${chatRoomId}`, (message) => {
           if (message.isBinaryBody) {
             try {
@@ -51,7 +84,7 @@ const ChatroomScreen = ({ route, navigation }) => {
               const jsonString = decoder.decode(new Uint8Array(binaryArray));
               if (jsonString) {
                 const receivedMessage = JSON.parse(jsonString);
-                setChatMessages((prevMessages) => [...prevMessages, receivedMessage]);
+                setChatMessages((prevMessages) => [receivedMessage, ...prevMessages]);
               }
             } catch (error) {
               console.error('오류:', error);
@@ -91,25 +124,39 @@ const ChatroomScreen = ({ route, navigation }) => {
     }
   };
 
-  useEffect(() => {
-    // 새로운 메시지가 추가될 때마다 FlatList를 아래로 스크롤합니다.
-    if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
-    }
-  }, [chatMessages]); // chatMessages가 변경될 때마다 실행
-
   const renderMessageItem = ({ item }) => {
     const isSender = item.senderProfileId == profileId; // 현재 사용자와 메시지 발신자 비교
-  
+
+    // 로컬 타임스탬프 생성 (예: 현재 시간)
+    const localTimestamp = new Date().toLocaleTimeString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
     return (
-      <View style={[
-        styles.messageContainer,
-        isSender ? styles.messageSender : styles.messageReceiver // 발신자/수신자 스타일 결정
-      ]}>
-        <Text style={styles.message}>{item.content}</Text>
-      </View>
+        <View style={[
+            styles.messageContainer,
+            isSender ? styles.messageSender : styles.messageReceiver // 발신자/수신자 스타일 결정
+        ]}>
+            <View>
+                {/* item.message가 존재할 때 */}
+                {item.message ? (
+                    <>
+                        <Text style={styles.message}>{item.message}</Text>
+                        <Text style={styles.timestamp}>
+                            {new Date(item.createdAt).toLocaleTimeString([], { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                    </>
+                ) : (
+                    // item.content가 존재할 때
+                    item.content && (
+                        <>
+                            <Text style={styles.message}>{item.content}</Text>
+                            <Text style={styles.timestamp}>{localTimestamp}</Text>
+                        </>
+                    )
+                )}
+            </View>
+        </View>
     );
-  };  
+};
 
   return (
     <View style={styles.container}>
@@ -118,8 +165,9 @@ const ChatroomScreen = ({ route, navigation }) => {
         ref={flatListRef}
         data={chatMessages}
         renderItem={renderMessageItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.chatContentId}
         style={styles.chatContent}
+        inverted
       />
       
       <View style={styles.inputContainer}>
@@ -208,6 +256,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
+  timestamp: {
+    fontSize: 10,
+    color: 'white',
+    textAlign: 'right', // 오른쪽 정렬
+},
 });
 
 export default ChatroomScreen;

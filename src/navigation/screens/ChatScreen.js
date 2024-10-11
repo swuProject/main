@@ -40,7 +40,7 @@ const ChatScreen = () => {
   
       // 데이터가 존재하는지 확인 후 reverse() 호출
       if (data.data) {
-        console.log('채팅방 목록', data.data);
+        //console.log('채팅방 목록', data.data);
         setChatRooms(data.data.reverse());
       } else {
         console.log('채팅방 목록이 비어 있습니다.');
@@ -68,12 +68,12 @@ const ChatScreen = () => {
   
       if (!response.ok) {
         const errorData = await response.json();
-        console.log(`서버 오류: ${errorData.message || response.statusText}`);
+        console.log(`서버 메시지: ${errorData.message || response.statusText}`);
         return;
       }
   
       const responseData = await response.json();
-      console.log(responseData); 
+      //console.log(responseData); 
   
       if (responseData.status === "OK") {
         setSearchResults([responseData.data]); 
@@ -111,6 +111,13 @@ const ChatScreen = () => {
         console.log('채팅방이 성공적으로 생성되었습니다.', data);
         // 채팅방 목록을 업데이트
         fetchChatRooms(); // fetchChatRooms를 호출
+
+        navigation.navigate('ChatroomScreen', {
+          chatRoomId: data.data.chatRoomId,
+          chatRoomName: data.data.guestProfileNickname,
+          chatRoomImage: data.data.guestProfileImage,
+          guestProfileId: data.data.guestProfileId,
+        });
       } else {
         console.log('채팅방 생성 실패:', data.message);
       }
