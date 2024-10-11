@@ -110,9 +110,10 @@ const ChatroomScreen = ({ route, navigation }) => {
     if (client && message.trim() && profileId) {
       const chatMessage = {
         content: message,
-        senderProfileId: profileId,  // 실제 사용자 정보를 여기에 넣음
+        senderProfileId: profileId,
         receiverProfileId: guestProfileId,
         roomId: chatRoomId,
+        messageType: 'CHAT',
       };
 
       client.publish({
