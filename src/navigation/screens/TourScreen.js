@@ -47,14 +47,31 @@ const TourScreen = () => {
   const fetchTourData = async (pageNum, latitude, longitude) => {
     setLoading(true);
     try {
+      console.log(
+        `Fetching tour data for page: ${pageNum}, latitude: ${latitude}, longitude: ${longitude}`
+      );
+
       const response = await fetch(
         `https://jy3lh3sugl.execute-api.ap-northeast-2.amazonaws.com/default/suggested_tour_list?latitude=${latitude}&longitude=${longitude}&numOfRows=4&page=${pageNum}`
       );
-      const data = await response.json();
-      setTourData((prevData) => [...prevData, ...data.result]); // 이전 데이터에 새 데이터를 추가
-      setTotalPages(data.totalPages);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Response contents:", data);
+
+        if (data.result) {
+          setTourData((prevData) => [...prevData, ...data.result]);
+          setTotalPages(data.totalPages);
+        } else {
+          console.warn("No result found in API response");
+          setTourData([]);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error(`Error: ${response.status} - ${errorText}`);
+      }
     } catch (error) {
-      console.error("Error fetching tour data:", error);
+      console.error("Error fetching tour data:", error.message);
     }
     setLoading(false);
   };

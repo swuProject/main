@@ -13,6 +13,7 @@ import {
   RefreshControl,
 } from "react-native";
 import Icon from "react-native-vector-icons/FontAwesome";
+import Icon2 from "react-native-vector-icons/MaterialCommunityIcons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Swiper from "react-native-swiper";
 
@@ -309,6 +310,35 @@ const GetComments = async (capsuleId) => {
   }
 };
 
+// 캡슐을 삭제하는 함수
+const deleteCapsule = async (capsuleId) => {
+  try {
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+    const response = await fetch(`${base_url}/api/capsules/${capsuleId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+      },
+    });
+
+    if (response.ok) {
+      // 삭제 성공
+      console.log("Capsule deleted successfully");
+      return true; // 성공 여부를 반환할 수 있음
+    } else {
+      // 삭제 실패
+      const errorData = await response.json();
+      console.error("Failed to delete capsule:", errorData);
+      return false; // 실패 여부를 반환할 수 있음
+    }
+  } catch (error) {
+    // 네트워크 오류 또는 다른 오류 처리
+    console.error("Error occurred while deleting capsule:", error);
+    return false;
+  }
+};
+
 // 새로운 댓글을 서버에 저장하는 함수
 const SaveComment = async (
   profileId,
@@ -376,26 +406,24 @@ const Item = ({
   imageList,
   profileImgPath,
   initialLiked,
+  handleRefresh, // props로 받아오기
 }) => {
   const [expanded, setExpanded] = useState(false);
-  const [liked, setLiked] = useState(initialLiked); // 좋아요 상태 초기화
+  const [liked, setLiked] = useState(initialLiked);
   const [modalVisible, setModalVisible] = useState(false);
-  //const [visitCount, setVisitCount] = useState(0);
   const [likeCount, setLikeCount] = useState(0);
   const [comments, setComments] = useState([]);
   const [commentCount, setCommentCount] = useState(0);
   const [newComment, setNewComment] = useState("");
+  const [menuVisible, setMenuVisible] = useState(false); // 메뉴 표시 상태
+  const [deleting, setDeleting] = useState(false); // 삭제 진행 상태
+  const [currentUserNickname, setCurrentUserNickname] = useState("");
 
   useEffect(() => {
-    const fetchVisitCount = async () => {
-      //const count = await GetVisitCount(capsuleId);
-      //setVisitCount(count);
-    };
-
     const fetchLikeCount = async () => {
-      const { likeCount, userLiked } = await GetLikeCount(capsuleId); // 변경된 반환 값
-      setLikeCount(likeCount); // 좋아요 수 업데이트
-      setLiked(userLiked); // 현재 유저의 좋아요 상태 업데이트
+      const { likeCount, userLiked } = await GetLikeCount(capsuleId);
+      setLikeCount(likeCount);
+      setLiked(userLiked);
     };
 
     const fetchCommentCount = async () => {
@@ -403,9 +431,14 @@ const Item = ({
       setCommentCount(count);
     };
 
+    const fetchCurrentUserNickname = async () => {
+      const nickname = await AsyncStorage.getItem("nickname");
+      setCurrentUserNickname(nickname);
+    };
+
     fetchCommentCount();
-    //fetchVisitCount();
     fetchLikeCount();
+    fetchCurrentUserNickname(); // 닉네임 확인
   }, [capsuleId]);
 
   const handleLike = async () => {
@@ -413,12 +446,10 @@ const Item = ({
     const capsuleLikeId = await getCapsuleLikeId(capsuleId);
 
     if (liked) {
-      // 하트가 눌린 경우, 좋아요를 삭제
       await DeleteLike(capsuleLikeId);
       setLiked(false);
       setLikeCount((prevCount) => prevCount - 1);
     } else {
-      // 하트가 눌리지 않은 경우, 좋아요를 추가
       await SaveLike(userId, capsuleId);
       setLiked(true);
       setLikeCount((prevCount) => prevCount + 1);
@@ -446,6 +477,18 @@ const Item = ({
     }
   };
 
+  const handleDeleteCapsule = async () => {
+    setDeleting(true);
+    const success = await deleteCapsule(capsuleId);
+    if (success) {
+      console.log("Capsule successfully deleted");
+      await handleRefresh(); // 삭제 후 새로고침
+    } else {
+      console.log("Failed to delete capsule");
+    }
+    setDeleting(false);
+  };
+
   return (
     <View style={styles.item}>
       <View style={styles.userContainer}>
@@ -455,20 +498,38 @@ const Item = ({
           <Text>프로필 이미지 없음</Text>
         )}
         <Text style={styles.title}>{nickname}</Text>
+        <TouchableOpacity
+          onPress={() => setMenuVisible(!menuVisible)}
+          style={{ position: "absolute", right: 10, top: 10 }} // 오른쪽 상단에 배치
+        >
+          <Icon2 name="dots-horizontal" size={24} color="#BBBBBB" />
+        </TouchableOpacity>
+
+        {/* 메뉴 (삭제 버튼) */}
+        {menuVisible && nickname === currentUserNickname && (
+          <View style={styles.menuContainer}>
+            <TouchableOpacity onPress={handleDeleteCapsule} disabled={deleting}>
+              <Text style={styles.deleteButton}>
+                {deleting ? "삭제 중..." : "캡슐 삭제"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
+      {/* Swiper 및 이미지 렌더링 */}
       {imageList && imageList.length > 0 ? (
         <Swiper
           style={styles.swiperContainer}
-          loop={false} // 이미지 끝에 도달하면 다시 처음으로 가지 않게 설정
-          showsPagination={true} // 페이지 표시 (하단의 점들)
+          loop={false}
+          showsPagination={true}
         >
           {imageList.map((item, index) => (
             <Image
               key={index}
-              style={[styles.image, { resizeMode: "cover" }]} // 크기와 표시 방법을 명확히 설정
+              style={[styles.image, { resizeMode: "cover" }]}
               source={{ uri: item.imagePath }}
-              onError={(error) => console.log("Image load error:", error)} // 이미지 로드 에러 확인
+              onError={(error) => console.log("Image load error:", error)}
             />
           ))}
         </Swiper>
@@ -488,6 +549,8 @@ const Item = ({
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* 좋아요 및 댓글 */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity onPress={handleLike} style={styles.likeContainer}>
           <Icon
@@ -511,6 +574,8 @@ const Item = ({
           <Text style={styles.likeCount}>{commentCount}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* 댓글 모달 */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -526,7 +591,7 @@ const Item = ({
                 <CommentItem
                   comment={item.comment}
                   nickname={item.nickname}
-                  profileImgPath={item.profileImgPath} // 여기에 올바른 프로필 이미지 경로를 추가
+                  profileImgPath={item.profileImgPath}
                 />
               )}
               keyExtractor={(item) => item.commentId.toString()}
@@ -536,10 +601,13 @@ const Item = ({
               value={newComment}
               onChangeText={setNewComment}
               placeholder="댓글을 입력하세요"
-              onSubmitEditing={handleSaveComment} // 엔터 누르면 댓글 저장
-            returnKeyType="send" // 키보드의 "엔터"를 "send" 버튼으로 설정
+              onSubmitEditing={handleSaveComment}
+              returnKeyType="send"
             />
-            <TouchableOpacity style={styles.closeButton} onPress={handleCloseModal}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleCloseModal}
+            >
               <Text style={styles.buttonText}>닫기</Text>
             </TouchableOpacity>
           </View>
@@ -659,6 +727,7 @@ const HomeScreen = () => {
       imageList={item.imageList}
       profileImgPath={item.profileImgPath}
       initialLiked={item.initialLiked}
+      handleRefresh={handleRefresh} // handleRefresh를 props로 전달
     />
   );
 
@@ -798,15 +867,33 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   closeButton: {
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     padding: 10,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 8,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 18,
+  },
+  menuContainer: {
+    position: "absolute",
+    right: 10,
+    top: 40, // 메뉴 위치 조정
+    backgroundColor: "white",
+    borderRadius: 5,
+    elevation: 2, // 그림자 효과 (안드로이드)
+    zIndex: 1, // 다른 컴포넌트 위에 위치하도록 설정
+  },
+  deleteButton: {
+    backgroundColor: "red", // 배경색
+    borderRadius: 5, // 모서리 둥글게
+    paddingVertical: 10, // 세로 패딩
+    paddingHorizontal: 15, // 가로 패딩
+    color: "white", // 텍스트 색상
+    textAlign: "center", // 텍스트 가운데 정렬
+    fontWeight: "bold", // 글씨 두껍게
   },
 });
 
