@@ -378,11 +378,63 @@ const SaveComment = async (
   }
 };
 
+// 댓글 삭제 함수
+const DeleteComment = async (capsuleId, commentId) => {
+  try {
+    console.log("삭제하려는 commentId:", commentId); // commentId 값 확인용 로그
+
+    const token = await getAuthToken(); // JWT 토큰 가져오기
+
+    // DELETE 요청 보내기
+    const response = await fetch(
+      `${base_url}/api/capsules/comments/${commentId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // JWT 토큰 헤더에 추가
+        },
+      }
+    );
+
+    // 응답 상태 확인
+    const responseText = await response.text();
+    if (response.ok) {
+      console.log("댓글이 성공적으로 삭제되었습니다.");
+      return true; // 성공
+    } else {
+      console.log("댓글 삭제 실패:", responseText);
+      return false; // 실패
+    }
+  } catch (error) {
+    console.error("댓글 삭제 중 오류 발생:", error);
+    return false;
+  }
+};
+
 //댓글 Item
-const CommentItem = ({ comment, nickname, profileImgPath }) => {
-  console.log("CommentItem Props:", { comment, nickname, profileImgPath }); // 디버깅용 로그
+const CommentItem = ({
+  comment,
+  nickname,
+  profileImgPath,
+  capsuleId,
+  commentId,
+  onDelete,
+}) => {
+  const [menuVisible, setMenuVisible] = useState(false); // 메뉴 표시 상태 관리
+
+  // 댓글 삭제 처리
+  const handleDeleteComment = async () => {
+    const success = await DeleteComment(capsuleId, commentId); // capsuleId와 commentId를 전달
+    if (success) {
+      onDelete(commentId); // 성공적으로 삭제된 경우 상위 컴포넌트에 알림
+    }
+    setMenuVisible(false); // 메뉴 숨기기
+  };
+
   return (
     <View style={styles.commentItem}>
+      {/* 프로필 이미지 */}
       {profileImgPath ? (
         <Image
           style={styles.commentProfileImage}
@@ -391,10 +443,29 @@ const CommentItem = ({ comment, nickname, profileImgPath }) => {
       ) : (
         <Text style={styles.noProfileImage}>프로필 이미지 없음</Text>
       )}
+
+      {/* 닉네임 및 댓글 내용 */}
       <View style={styles.commentTextContainer}>
         <Text style={styles.commentNickname}>{nickname}</Text>
         <Text style={styles.commentText}>{comment}</Text>
       </View>
+
+      {/* ••• 아이콘 */}
+      <TouchableOpacity
+        onPress={() => setMenuVisible(!menuVisible)}
+        style={styles.menuIconContainer}
+      >
+        <Icon2 name="dots-horizontal" size={24} color="#BBBBBB" />
+      </TouchableOpacity>
+
+      {/* 삭제 버튼 표시 */}
+      {menuVisible && (
+        <View style={styles.menuContainer}>
+          <TouchableOpacity onPress={handleDeleteComment}>
+            <Text style={styles.deleteButton}>댓글 삭제</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -438,8 +509,21 @@ const Item = ({
 
     fetchCommentCount();
     fetchLikeCount();
-    fetchCurrentUserNickname(); // 닉네임 확인
+    fetchCurrentUserNickname();
   }, [capsuleId]);
+
+  const handleDeleteComment = (commentId) => {
+    setComments((prevComments) =>
+      prevComments.filter((comment) => comment.commentId !== commentId)
+    );
+  };
+
+  const updateCommentCount = async () => {
+    const count = await GetCommentCount(capsuleId);
+    setCommentCount(count);
+  };
+
+  updateCommentCount();
 
   const handleLike = async () => {
     const userId = await AsyncStorage.getItem("profileId");
@@ -592,6 +676,9 @@ const Item = ({
                   comment={item.comment}
                   nickname={item.nickname}
                   profileImgPath={item.profileImgPath}
+                  capsuleId={capsuleId}
+                  commentId={item.commentId}
+                  onDelete={handleDeleteComment}
                 />
               )}
               keyExtractor={(item) => item.commentId.toString()}
@@ -880,20 +967,20 @@ const styles = StyleSheet.create({
   menuContainer: {
     position: "absolute",
     right: 10,
-    top: 40, // 메뉴 위치 조정
+    top: 40,
     backgroundColor: "white",
     borderRadius: 5,
-    elevation: 2, // 그림자 효과 (안드로이드)
-    zIndex: 1, // 다른 컴포넌트 위에 위치하도록 설정
+    elevation: 2,
+    zIndex: 1,
   },
   deleteButton: {
-    backgroundColor: "red", // 배경색
-    borderRadius: 5, // 모서리 둥글게
-    paddingVertical: 10, // 세로 패딩
-    paddingHorizontal: 15, // 가로 패딩
-    color: "white", // 텍스트 색상
-    textAlign: "center", // 텍스트 가운데 정렬
-    fontWeight: "bold", // 글씨 두껍게
+    backgroundColor: "red",
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
   },
 });
 
