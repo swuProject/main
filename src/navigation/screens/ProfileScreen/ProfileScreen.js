@@ -1,11 +1,20 @@
-import React, { useState, useCallback, useLayoutEffect } from 'react';
-import { View, Text, Image, StyleSheet, ActivityIndicator, FlatList, Dimensions } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { refreshToken } from '../../../../Components/refreshToken';
+import React, { useState, useCallback, useLayoutEffect } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ActivityIndicator,
+  FlatList,
+  Dimensions,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { refreshToken } from "../../../../Components/refreshToken";
 
-const base_url = "https://tuituiworld.store:8443";
-const defaultImg = "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png";
+const base_url = "https://tuituiworld.store";
+const defaultImg =
+  "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png";
 
 const ProfileScreen = () => {
   const [name, setName] = useState("");
@@ -18,38 +27,40 @@ const ProfileScreen = () => {
   const [posts, setPosts] = useState([]);
 
   const navigation = useNavigation();
-  const screenWidth = Dimensions.get('window').width;
+  const screenWidth = Dimensions.get("window").width;
 
   const fetchFollowData = async (profileId, accessToken) => {
     try {
-      const response = await fetch(`${base_url}/api/profiles/follows/${profileId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
-  
+      const response = await fetch(
+        `${base_url}/api/profiles/follows/${profileId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       if (response.ok) {
         const data = await response.json();
         const { followerList, followingList } = data.data;
-  
+
         setFollowerCount(followerList ? followerList.length : 0);
         setFollowingCount(followingList ? followingList.length : 0);
-    
-      } 
+      }
     } catch (error) {
-      console.error('팔로워/팔로잉 데이터 가져오기 오류:', error);
+      console.error("팔로워/팔로잉 데이터 가져오기 오류:", error);
     }
   };
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
-  
+
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      let accessToken = await AsyncStorage.getItem('accessToken');
-      
+      const userId = await AsyncStorage.getItem("userId");
+      let accessToken = await AsyncStorage.getItem("accessToken");
+
       if (!userId || !accessToken) {
         console.error("User ID 또는 access token이 누락되었습니다.");
         return;
@@ -57,10 +68,10 @@ const ProfileScreen = () => {
 
       // 프로필 정보 가져오기
       let response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -69,10 +80,10 @@ const ProfileScreen = () => {
         accessToken = await refreshToken();
         if (accessToken) {
           response = await fetch(`${base_url}/api/users/${userId}/profiles`, {
-            method: 'GET',
+            method: "GET",
             headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json',
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
             },
           });
         }
@@ -80,13 +91,14 @@ const ProfileScreen = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const { profileId, nickname, name, describeSelf, profileImgPath } = data.data;
+        const { profileId, nickname, name, describeSelf, profileImgPath } =
+          data.data;
 
         // AsyncStorage에 프로필 정보 저장
-        await AsyncStorage.setItem('profileId', JSON.stringify(profileId));
-        await AsyncStorage.setItem('name', name);
-        await AsyncStorage.setItem('nickname', nickname);
-        await AsyncStorage.setItem('describeSelf', describeSelf);
+        await AsyncStorage.setItem("profileId", JSON.stringify(profileId));
+        await AsyncStorage.setItem("name", name);
+        await AsyncStorage.setItem("nickname", nickname);
+        await AsyncStorage.setItem("describeSelf", describeSelf);
 
         // 상태 업데이트
         setAccount(nickname || "닉네임 없음");
@@ -98,7 +110,7 @@ const ProfileScreen = () => {
         // 프로필 이미지 설정
         if (profileImgPath) {
           try {
-            const imgResponse = await fetch(profileImgPath, { method: 'HEAD' });
+            const imgResponse = await fetch(profileImgPath, { method: "HEAD" });
             if (imgResponse.ok) {
               setProfileImgPath(profileImgPath);
             } else {
@@ -107,37 +119,43 @@ const ProfileScreen = () => {
           } catch {
             setProfileImgPath(defaultImg);
           }
-          await AsyncStorage.setItem('profileImgPath', profileImgPath);
+          await AsyncStorage.setItem("profileImgPath", profileImgPath);
         }
 
         // 팔로워 및 팔로잉 수 설정
         await fetchFollowData(profileId, accessToken);
       } else {
-        console.error("프로필 정보를 가져오는데 실패했습니다:", response.status);
+        console.error(
+          "프로필 정보를 가져오는데 실패했습니다:",
+          response.status
+        );
       }
     } catch (error) {
-      console.error('프로필 가져오기 오류:', error);
+      console.error("프로필 가져오기 오류:", error);
     } finally {
       setLoading(false);
     }
-  }, []);  
+  }, []);
 
   const fetchPosts = async (nickname, accessToken) => {
     try {
-      const response = await fetch(`${base_url}/api/profiles/nicknames/${nickname}/capsules?pageNo=0&pageSize=9&sortBy=writeAt`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        `${base_url}/api/profiles/nicknames/${nickname}/capsules?pageNo=0&pageSize=9&sortBy=writeAt`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
         setPosts(data.data.contents); // Update posts state with the fetched posts
-      } 
+      }
     } catch (error) {
-      console.error('게시글 가져오기 오류:', error);
+      console.error("게시글 가져오기 오류:", error);
     }
   };
 
@@ -151,24 +169,27 @@ const ProfileScreen = () => {
     navigation.setOptions({
       headerLeft: () => (
         <View style={styles.headerLeft}>
-          <Text style={styles.account}>{account || '닉네임 없음'}</Text>
+          <Text style={styles.account}>{account || "닉네임 없음"}</Text>
         </View>
       ),
     });
   }, [navigation, account]);
 
   const renderPost = ({ item }) => {
-    const imageUri = item.imageList && item.imageList.length > 0 
-      ? item.imageList[0].imagePath 
-      : defaultImg;
+    const imageUri =
+      item.imageList && item.imageList.length > 0
+        ? item.imageList[0].imagePath
+        : defaultImg;
 
     return (
       <View style={styles.postContainer}>
-        <Image source={{ uri: imageUri }} style={{ width: screenWidth / 3, height: screenWidth / 3 }} />
+        <Image
+          source={{ uri: imageUri }}
+          style={{ width: screenWidth / 3, height: screenWidth / 3 }}
+        />
       </View>
     );
   };
-  
 
   return (
     <View style={styles.container}>
@@ -211,11 +232,11 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   img: {
@@ -227,26 +248,26 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   stats: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginVertical: 10,
   },
   stat: {
-    alignItems: 'center',
+    alignItems: "center",
     marginHorizontal: 24,
   },
   statNumber: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   statLabel: {
     fontSize: 14,
-    color: '#888',
+    color: "#888",
   },
   name: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
     marginLeft: 16,
   },
@@ -257,15 +278,15 @@ const styles = StyleSheet.create({
   },
   account: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'black',
+    fontWeight: "bold",
+    color: "black",
   },
   headerLeft: {
     marginLeft: 16,
   },
   posts: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     marginTop: 30,
   },
 });

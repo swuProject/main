@@ -1,12 +1,19 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import { refreshToken } from './refreshToken';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { refreshToken } from "./refreshToken";
 
 export default function DeleteUserScreen() {
   const navigation = useNavigation();
-  const baseUrl = "https://tuituiworld.store:8443"; // baseUrl 설정
+  const baseUrl = "https://tuituiworld.store"; // baseUrl 설정
 
   const handleDeleteAccount = async () => {
     Alert.alert(
@@ -15,15 +22,15 @@ export default function DeleteUserScreen() {
       [
         {
           text: "취소",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "탈퇴",
           onPress: async () => {
             try {
-              let accessToken = await AsyncStorage.getItem('accessToken');
-              let userId = await AsyncStorage.getItem('userId'); 
-              let account = await AsyncStorage.getItem('account');  
+              let accessToken = await AsyncStorage.getItem("accessToken");
+              let userId = await AsyncStorage.getItem("userId");
+              let account = await AsyncStorage.getItem("account");
 
               console.log("Access Token:", accessToken);
               console.log("User ID:", userId);
@@ -34,7 +41,7 @@ export default function DeleteUserScreen() {
                   method: "DELETE",
                   headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                   },
                   body: JSON.stringify({
                     userId: userId,
@@ -47,32 +54,40 @@ export default function DeleteUserScreen() {
                   token = await refreshToken();
                   return tryRequest(token); // 새 액세스 토큰으로 재시도
                 } else if (response.status === 403) {
-                  Alert.alert("권한 오류", "계정을 삭제할 권한이 없습니다. 관리자에게 문의하십시오.");
+                  Alert.alert(
+                    "권한 오류",
+                    "계정을 삭제할 권한이 없습니다. 관리자에게 문의하십시오."
+                  );
                 } else {
                   const responseBody = await response.text();
                   if (response.ok) {
                     // 계정 삭제 성공 후 AsyncStorage의 모든 정보 삭제
                     await AsyncStorage.clear();
-                    Alert.alert("탈퇴 완료", "계정이 성공적으로 삭제되었습니다.");
+                    Alert.alert(
+                      "탈퇴 완료",
+                      "계정이 성공적으로 삭제되었습니다."
+                    );
                     navigation.reset({
                       index: 0,
                       routes: [{ name: "Login" }],
                     });
                   } else {
-                    Alert.alert("오류", `계정 탈퇴에 실패했습니다: ${responseBody}`);
+                    Alert.alert(
+                      "오류",
+                      `계정 탈퇴에 실패했습니다: ${responseBody}`
+                    );
                     console.error("오류 발생", response, responseBody);
                   }
                 }
               };
 
               await tryRequest(accessToken);
-
             } catch (error) {
               console.error("오류 발생", error);
               Alert.alert("오류", "계정 탈퇴 중 오류가 발생했습니다.");
             }
-          }
-        }
+          },
+        },
       ],
       { cancelable: false }
     );
@@ -91,24 +106,24 @@ export default function DeleteUserScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
   },
   text: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: "#FF3B30",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

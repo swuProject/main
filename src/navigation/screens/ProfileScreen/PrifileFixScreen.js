@@ -1,16 +1,29 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { launchImageLibrary } from 'react-native-image-picker';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { launchImageLibrary } from "react-native-image-picker";
 
 // 프로필 정보를 서버에 저장하는 함수 (닉네임과 자기소개만 전송)
-const saveUserProfile = async (profileId, nickname, describeSelf, accessToken) => {
+const saveUserProfile = async (
+  profileId,
+  nickname,
+  describeSelf,
+  accessToken
+) => {
   try {
-    const response = await fetch(`https://tuituiworld.store:8443/api/profiles`, {
+    const response = await fetch(`https://tuituiworld.store/api/profiles`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify({ profileId, nickname, describeSelf }),
     });
@@ -26,7 +39,7 @@ const saveUserProfile = async (profileId, nickname, describeSelf, accessToken) =
 
 // 프로필 이미지를 서버에 업로드하는 함수
 const uploadProfileImage = async (accessToken, imageUri) => {
-  const storedProfileId = await AsyncStorage.getItem('profileId');
+  const storedProfileId = await AsyncStorage.getItem("profileId");
   const profileId = storedProfileId ? JSON.parse(storedProfileId) : null;
 
   if (!profileId) {
@@ -38,18 +51,21 @@ const uploadProfileImage = async (accessToken, imageUri) => {
   formData.append("profileId", profileId);
   formData.append("file", {
     uri: imageUri,
-    type: 'image/jpeg', // 이미지 파일의 MIME 타입
-    name: 'profile.jpg', // 업로드될 파일 이름
+    type: "image/jpeg", // 이미지 파일의 MIME 타입
+    name: "profile.jpg", // 업로드될 파일 이름
   });
 
   try {
-    const response = await fetch("https://tuituiworld.store:8443/api/profiles/images", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-      },
-      body: formData,
-    });
+    const response = await fetch(
+      "https://tuituiworld.store/api/profiles/images",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.text();
@@ -75,18 +91,19 @@ const ProfileFixScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const storedName = await AsyncStorage.getItem('name');
-        const storedNickname = await AsyncStorage.getItem('nickname');
-        const storedDescribeSelf = await AsyncStorage.getItem('describeSelf');
-        const storedProfileImgPath = await AsyncStorage.getItem('profileImgPath');
+        const storedName = await AsyncStorage.getItem("name");
+        const storedNickname = await AsyncStorage.getItem("nickname");
+        const storedDescribeSelf = await AsyncStorage.getItem("describeSelf");
+        const storedProfileImgPath = await AsyncStorage.getItem(
+          "profileImgPath"
+        );
 
         if (storedName) setRealName(storedName);
         if (storedNickname) setNickname(storedNickname);
         if (storedDescribeSelf) setDescribeSelf(storedDescribeSelf);
         if (storedProfileImgPath) setProfileImgPath(storedProfileImgPath);
-
       } catch (error) {
-        console.log('프로필 정보 불러오기 오류:', error);
+        console.log("프로필 정보 불러오기 오류:", error);
       }
     };
 
@@ -95,35 +112,45 @@ const ProfileFixScreen = ({ navigation }) => {
 
   const handleSaveProfile = async () => {
     try {
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      const profileId = await AsyncStorage.getItem('profileId');
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      const profileId = await AsyncStorage.getItem("profileId");
       if (!accessToken || !profileId) {
-        Alert.alert("오류", "액세스 토큰 또는 프로필 ID가 없습니다. 로그인 상태를 확인하세요.");
+        Alert.alert(
+          "오류",
+          "액세스 토큰 또는 프로필 ID가 없습니다. 로그인 상태를 확인하세요."
+        );
         return;
       }
-  
+
       // 이미지가 변경되었는지 확인
-      if (profileImgPath && profileImgPath !== "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png") {
-        const uploadResponse = await uploadProfileImage(accessToken, profileImgPath);
+      if (
+        profileImgPath &&
+        profileImgPath !==
+          "https://d2ppx30y7ro2y1.cloudfront.net/profile_image/basic_profilie_image.png"
+      ) {
+        const uploadResponse = await uploadProfileImage(
+          accessToken,
+          profileImgPath
+        );
       }
-  
+
       // 닉네임이나 자기소개 저장
       await saveUserProfile(profileId, nickname, describeSelf, accessToken);
-  
+
       // 저장된 정보 AsyncStorage에 저장
-      await AsyncStorage.setItem('nickname', nickname);
-      await AsyncStorage.setItem('describeSelf', describeSelf);
-      
+      await AsyncStorage.setItem("nickname", nickname);
+      await AsyncStorage.setItem("describeSelf", describeSelf);
+
       Alert.alert("성공", "프로필이 저장되었습니다.");
       navigation.goBack(); // 이전 화면으로 이동
     } catch (error) {
       console.error("프로필 저장 오류:", error);
       Alert.alert("오류", error.message);
     }
-  };  
-  
+  };
+
   const handleImagePicker = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.5 }, (response) => {
+    launchImageLibrary({ mediaType: "photo", quality: 0.5 }, (response) => {
       if (response.didCancel) {
       } else if (response.errorCode) {
         console.error("이미지 선택 오류:", response.errorMessage);
@@ -132,7 +159,7 @@ const ProfileFixScreen = ({ navigation }) => {
         setIsImageChanged(true); // 이미지 변경 상태
       }
     });
-  };  
+  };
 
   useEffect(() => {
     navigation.setOptions({
@@ -182,10 +209,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   profileSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
   },
   img: {
@@ -199,14 +226,14 @@ const styles = StyleSheet.create({
     color: "#4F8BFF",
   },
   textBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 30,
   },
   label: {
     fontSize: 18,
     marginRight: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   input: {
     flex: 1,
@@ -219,7 +246,7 @@ const styles = StyleSheet.create({
     color: "black",
     fontSize: 18,
     marginRight: 10,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   font: {
     fontSize: 18,

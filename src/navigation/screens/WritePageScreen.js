@@ -30,7 +30,7 @@ export default function WritePageScreen({ navigation }) {
   const [location, setLocation] = useState(null); // 위치 정보 상태
   const [currentLocation, setCurrentLocation] = useState(""); // 현재 위치를 주소 형태로 저장
 
-  const base_url = "https://tuituiworld.store:8443";
+  const base_url = "https://tuituiworld.store";
 
   useFocusEffect(
     React.useCallback(() => {

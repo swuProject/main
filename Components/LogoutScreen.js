@@ -1,11 +1,18 @@
-import React from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 export default function LogoutScreen() {
   const navigation = useNavigation();
-  const baseUrl = "https://tuituiworld.store:8443"; // baseUrl 설정
+  const baseUrl = "https://tuituiworld.store"; // baseUrl 설정
 
   const handleLogout = async () => {
     Alert.alert(
@@ -14,26 +21,29 @@ export default function LogoutScreen() {
       [
         {
           text: "취소",
-          style: "cancel"
+          style: "cancel",
         },
         {
           text: "로그아웃",
           onPress: async () => {
             try {
               // 서버에 로그아웃 API 호출 (필요한 경우)
-              let accessToken = await AsyncStorage.getItem('accessToken');
+              let accessToken = await AsyncStorage.getItem("accessToken");
               if (accessToken) {
                 const response = await fetch(`${baseUrl}/api/logout`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${accessToken}`,
+                    Authorization: `Bearer ${accessToken}`,
                   },
                 });
 
                 if (!response.ok) {
                   const responseBody = await response.text();
-                  Alert.alert("오류", `로그아웃 요청에 실패했습니다: ${responseBody}`);
+                  Alert.alert(
+                    "오류",
+                    `로그아웃 요청에 실패했습니다: ${responseBody}`
+                  );
                   return;
                 }
               }
@@ -48,13 +58,12 @@ export default function LogoutScreen() {
               });
 
               Alert.alert("로그아웃 완료", "성공적으로 로그아웃 되었습니다.");
-              
             } catch (error) {
               console.error("오류 발생", error);
               Alert.alert("오류", "로그아웃 중 오류가 발생했습니다.");
             }
-          }
-        }
+          },
+        },
       ],
       { cancelable: false }
     );
@@ -73,24 +82,24 @@ export default function LogoutScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
   },
   text: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: "#007AFF",
     paddingVertical: 12,
     paddingHorizontal: 32,
     borderRadius: 8,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });

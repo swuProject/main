@@ -21,7 +21,7 @@ import Swiper from "react-native-swiper";
 import FestivalScreen from "./FestivalScreen";
 import TourScreen from "./TourScreen";
 
-const base_url = "https://tuituiworld.store:8443";
+const base_url = "https://tuituiworld.store";
 
 const getAuthToken = async () => {
   try {
@@ -225,7 +225,7 @@ const GetLikeCount = async (capsuleId) => {
     const profileId = await AsyncStorage.getItem("profileId"); // 현재 유저의 profileId 가져오기
 
     const response = await fetch(
-      `https://tuituiworld.store:8443/api/capsules/${capsuleId}/likes`,
+      `https://tuituiworld.store/api/capsules/${capsuleId}/likes`,
       {
         method: "GET",
         headers: {
@@ -258,7 +258,7 @@ const GetCommentCount = async (capsuleId) => {
     const token = await getAuthToken(); // JWT 토큰 가져오기
 
     const response = await fetch(
-      `https://tuituiworld.store:8443/api/capsules/${capsuleId}/comments`,
+      `https://tuituiworld.store/api/capsules/${capsuleId}/comments`,
       {
         method: "GET",
         headers: {
@@ -420,21 +420,21 @@ const CommentItem = ({
   capsuleId,
   commentId,
   onDelete,
+  currentUserNickname, // 현재 로그인한 유저의 닉네임을 받아옴
 }) => {
-  const [menuVisible, setMenuVisible] = useState(false); // 메뉴 표시 상태 관리
+  const [menuVisible, setMenuVisible] = useState(false);
 
   // 댓글 삭제 처리
   const handleDeleteComment = async () => {
-    const success = await DeleteComment(capsuleId, commentId); // capsuleId와 commentId를 전달
+    const success = await DeleteComment(capsuleId, commentId);
     if (success) {
-      onDelete(commentId); // 성공적으로 삭제된 경우 상위 컴포넌트에 알림
+      onDelete(commentId); // 상위 컴포넌트에 삭제 결과 알림
     }
     setMenuVisible(false); // 메뉴 숨기기
   };
 
   return (
     <View style={styles.commentItem}>
-      {/* 프로필 이미지 */}
       {profileImgPath ? (
         <Image
           style={styles.commentProfileImage}
@@ -444,28 +444,30 @@ const CommentItem = ({
         <Text style={styles.noProfileImage}>프로필 이미지 없음</Text>
       )}
 
-      {/* 닉네임 및 댓글 내용 */}
       <View style={styles.commentTextContainer}>
         <Text style={styles.commentNickname}>{nickname}</Text>
         <Text style={styles.commentText}>{comment}</Text>
       </View>
 
       {/* ••• 아이콘 */}
-      <TouchableOpacity
-        onPress={() => setMenuVisible(!menuVisible)}
-        style={styles.menuIconContainer}
-      >
-        <Icon2 name="dots-horizontal" size={24} color="#BBBBBB" />
-      </TouchableOpacity>
+      {nickname === currentUserNickname && ( // 현재 유저와 닉네임이 일치할 때만 표시
+        <TouchableOpacity
+          onPress={() => setMenuVisible(!menuVisible)}
+          style={styles.menuIconContainer}
+        >
+          <Icon2 name="dots-horizontal" size={24} color="#BBBBBB" />
+        </TouchableOpacity>
+      )}
 
       {/* 삭제 버튼 표시 */}
-      {menuVisible && (
-        <View style={styles.menuContainer}>
-          <TouchableOpacity onPress={handleDeleteComment}>
-            <Text style={styles.deleteButton}>댓글 삭제</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {menuVisible &&
+        nickname === currentUserNickname && ( // 현재 유저와 닉네임이 일치할 때만 표시
+          <View style={styles.menuContainer}>
+            <TouchableOpacity onPress={handleDeleteComment}>
+              <Text style={styles.deleteButton}>댓글 삭제</Text>
+            </TouchableOpacity>
+          </View>
+        )}
     </View>
   );
 };
@@ -678,6 +680,7 @@ const Item = ({
                   profileImgPath={item.profileImgPath}
                   capsuleId={capsuleId}
                   commentId={item.commentId}
+                  currentUserNickname={currentUserNickname}
                   onDelete={handleDeleteComment}
                 />
               )}

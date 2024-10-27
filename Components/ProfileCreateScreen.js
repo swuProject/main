@@ -1,7 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Image, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Image,
+  ScrollView,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { launchImageLibrary } from 'react-native-image-picker';
+import { launchImageLibrary } from "react-native-image-picker";
 
 function ProfileCreateScreen({ navigation }) {
   const [name, setName] = useState("");
@@ -27,7 +36,7 @@ function ProfileCreateScreen({ navigation }) {
   }, []);
 
   const handleImagePicker = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.5 }, (response) => {
+    launchImageLibrary({ mediaType: "photo", quality: 0.5 }, (response) => {
       if (response.didCancel) {
         console.log("사용자가 이미지 선택을 취소했습니다.");
       } else if (response.errorCode) {
@@ -44,17 +53,17 @@ function ProfileCreateScreen({ navigation }) {
       Alert.alert("오류", "입력란을 모두 채워주세요.");
       return;
     }
-  
+
     try {
       let accessToken = await AsyncStorage.getItem("accessToken");
       const userId = await AsyncStorage.getItem("userId");
-  
+
       if (!userId) {
         Alert.alert("오류", "로그인이 필요합니다.");
         navigation.replace("Login");
         return;
       }
-  
+
       const profileData = {
         userId,
         name,
@@ -63,25 +72,25 @@ function ProfileCreateScreen({ navigation }) {
         gender,
         birth,
       };
-  
+
       let response;
-  
+
       // 프로필 이미지가 있는 경우
       if (profileImgPath) {
         const formData = new FormData();
         formData.append("request", JSON.stringify(profileData));
-        
+
         formData.append("file", {
           uri: profileImgPath,
           type: "image/jpeg",
           name: "profile.jpg",
         });
-  
+
         response = await fetchProfileWithImage(accessToken, formData);
       } else {
         response = await fetchProfileWithoutImage(accessToken, profileData);
       }
-  
+
       // 토큰 만료 시 갱신 처리
       if (response.status === 401) {
         const newAccessToken = await refreshToken();
@@ -94,42 +103,45 @@ function ProfileCreateScreen({ navigation }) {
           return;
         }
       }
-  
+
       const responseData = await response.json();
       console.log(responseData.message);
-  
+
       if (response.ok) {
         // profileId 저장
         const profileId = responseData.data.profileId;
         await AsyncStorage.setItem("profileId", profileId.toString());
-  
+
         Alert.alert("성공", "프로필이 성공적으로 생성되었습니다.");
         navigation.replace("MainContainer");
       } else {
-        Alert.alert("오류", responseData.data.name || responseData.data.nickname || "알 수 없는 오류");
+        Alert.alert(
+          "오류",
+          responseData.data.name ||
+            responseData.data.nickname ||
+            "알 수 없는 오류"
+        );
       }
-  
     } catch (error) {
       console.error("오류", error);
     }
   };
-  
 
   const fetchProfileWithImage = async (accessToken, formData) => {
-    return fetch("https://tuituiworld.store:8443/api/profiles/with-image", {
+    return fetch("https://tuituiworld.store/api/profiles/with-image", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       body: formData,
     });
   };
 
   const fetchProfileWithoutImage = async (accessToken, profileData) => {
-    return fetch("https://tuituiworld.store:8443/api/profiles/without-image", {
+    return fetch("https://tuituiworld.store/api/profiles/without-image", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(profileData),
@@ -141,13 +153,19 @@ function ProfileCreateScreen({ navigation }) {
     return (
       <View style={styles.genderContainer}>
         <TouchableOpacity
-          style={[styles.genderButton, gender === 'MALE' && styles.genderButtonSelected]}
+          style={[
+            styles.genderButton,
+            gender === "MALE" && styles.genderButtonSelected,
+          ]}
           onPress={() => setGender("MALE")}
         >
           <Text style={styles.genderButtonText}>남성</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.genderButton, gender === 'FEMALE' && styles.genderButtonSelected]}
+          style={[
+            styles.genderButton,
+            gender === "FEMALE" && styles.genderButtonSelected,
+          ]}
           onPress={() => setGender("FEMALE")}
         >
           <Text style={styles.genderButtonText}>여성</Text>

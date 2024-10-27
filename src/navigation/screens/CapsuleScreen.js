@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const CapsuleScreen = ({ capsuleId, onClose }) => {
   const [capsule, setCapsule] = useState(null); // 캡슐 데이터 상태
-  const base_url = "https://tuituiworld.store:8443";
+  const base_url = "https://tuituiworld.store";
 
   // 캡슐 데이터 가져오기
   const fetchCapsuleData = async () => {

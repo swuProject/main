@@ -51,7 +51,7 @@ export default function MapScreen() {
       const token = await AsyncStorage.getItem("accessToken"); // JWT 토큰 가져오기
 
       const response = await axios.get(
-        "https://tuituiworld.store:8443/api/capsules",
+        "https://tuituiworld.store/api/capsules",
         {
           headers: {
             Authorization: `Bearer ${token}`, // JWT 토큰을 Authorization 헤더에 추가

@@ -1,17 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
-import { StyleSheet, View, Text, TouchableOpacity, Alert, ActivityIndicator } from "react-native";
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { login as kakaoLogin, getProfile as getKakaoProfile } from "@react-native-seoul/kakao-login";
-import NaverLogin from '@react-native-seoul/naver-login';
+import {
+  login as kakaoLogin,
+  getProfile as getKakaoProfile,
+} from "@react-native-seoul/kakao-login";
+import NaverLogin from "@react-native-seoul/naver-login";
 
 // 네이버 로그인 설정
-const consumerKey = 'czngT6MgRma04bBDCPEb';
-const consumerSecret = 'lejSJUGn50';
-const appName = 'TuiTui';
-const serviceUrlSchemeIOS = 'com.suwonuniv.tuitui';
+const consumerKey = "czngT6MgRma04bBDCPEb";
+const consumerSecret = "lejSJUGn50";
+const appName = "TuiTui";
+const serviceUrlSchemeIOS = "com.suwonuniv.tuitui";
 
-const base_url = "https://tuituiworld.store:8443";
+const base_url = "https://tuituiworld.store";
 
 function Loginscreen({ navigation }) {
   useEffect(() => {
@@ -24,7 +37,7 @@ function Loginscreen({ navigation }) {
       disableNaverAppAuthIOS: true,
     });
   }, []);
-  
+
   const [kakaoLoading, setKakaoLoading] = useState(false);
   const [naverLoading, setNaverLoading] = useState(false);
 
@@ -35,9 +48,7 @@ function Loginscreen({ navigation }) {
       const result = await kakaoLogin();
       if (result) {
         const profile = await getKakaoProfile();
-        await AsyncStorage.multiSet([
-          ["account", profile.email || ""],
-        ]);
+        await AsyncStorage.multiSet([["account", profile.email || ""]]);
         const email = encodeURIComponent(profile.email);
         const token = encodeURIComponent(result.accessToken);
         const apiUrl = `${base_url}/api/token?grant_type=authorization_code&account=${email}&sns_type=kakao&access_token=${token}`;
@@ -153,7 +164,9 @@ function Loginscreen({ navigation }) {
             {kakaoLoading ? (
               <ActivityIndicator size="small" color="#000" />
             ) : (
-              <Text style={{ color: "black", fontWeight: "bold", fontSize: 15 }}>
+              <Text
+                style={{ color: "black", fontWeight: "bold", fontSize: 15 }}
+              >
                 카카오로 시작하기
               </Text>
             )}
@@ -169,7 +182,9 @@ function Loginscreen({ navigation }) {
             {naverLoading ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
+              <Text
+                style={{ color: "white", fontWeight: "bold", fontSize: 15 }}
+              >
                 네이버로 시작하기
               </Text>
             )}
