@@ -46,7 +46,7 @@ const ChatroomScreen = ({ route, navigation }) => {
       try {
         const accessToken = await AsyncStorage.getItem("accessToken");
         const response = await fetch(
-          `https://tuituiworld.store/api/chat/rooms/${chatRoomId}/messages?pageNo=0&pageSize=100&sortBy=createdAt`,
+          `https://chat.tuituiworld.store/api/chat/rooms/${chatRoomId}/messages?pageNo=0&pageSize=100&sortBy=createdAt`,
           {
             method: "GET",
             headers: {
@@ -81,7 +81,7 @@ const ChatroomScreen = ({ route, navigation }) => {
   useEffect(() => {
     // WebSocket 클라이언트 설정
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS("https://tuituiworld.store/ws-stomp"),
+      webSocketFactory: () => new SockJS("https://chat.tuituiworld.store/ws-stomp"),
       debug: (str) => {
         //console.log(str);
       },

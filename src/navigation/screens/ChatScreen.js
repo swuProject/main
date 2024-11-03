@@ -18,7 +18,7 @@ const ChatScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigation = useNavigation();
 
-  const chat_url = "https://tuituiworld.store";
+  const chat_url = "https://chat.tuituiworld.store";
   const base_url = "https://tuituiworld.store";
 
   // 채팅방 목록 가져오는 함수
