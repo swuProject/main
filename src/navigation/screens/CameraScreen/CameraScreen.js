@@ -6,6 +6,7 @@ import Ionicons from "react-native-vector-icons/Ionicons"; // 아이콘을 가�
 // Screens
 import CameraActive from "./CameraActive";
 import WritePage from "../WritePageScreen";
+import ARScreen from './ARScreen'; // AR 스크린 컴포넌트를 import 해야 합니다
 
 const CameraStack = createStackNavigator();
 
@@ -26,6 +27,14 @@ const CameraScreen = ({ navigation }) => {
         onPress={() => navigation.navigate("CameraActive")}
       >
         <Text style={styles.buttonText}>카메라 촬영</Text>
+      </TouchableOpacity>
+
+      {/* AR 체험하기 버튼 추가 */}
+      <TouchableOpacity
+        style={styles.arButton}
+        onPress={() => navigation.navigate("ARScreen")}
+      >
+        <Text style={styles.buttonText}>AR 체험하기</Text>
       </TouchableOpacity>
     </View>
   );
@@ -71,6 +80,28 @@ const CameraStackScreen = () => {
           ),
         }}
       />
+      {/* AR 스크린 추가 */}
+      <CameraStack.Screen
+        name="ARScreen"
+        component={ARScreen}
+        options={{
+          title: "AR 체험",
+          headerTitleAlign: 'center',
+          headerTitleStyle: {
+            fontSize: 24,
+            fontWeight: "bold",
+          },
+          headerBackTitleVisible: false,
+          headerBackImage: () => (
+            <Ionicons
+              name="chevron-back-outline"
+              size={24}
+              color="black"
+              style={{ paddingLeft: 10 }}
+            />
+          ),
+        }}
+      />
     </CameraStack.Navigator>
   );
 };
@@ -102,6 +133,13 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "#fff",
     fontSize: 18,
+  },
+  arButton: {
+    backgroundColor: "black",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,  // 위 버튼과의 간격
   },
 });
 
