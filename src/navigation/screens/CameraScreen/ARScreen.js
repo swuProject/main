@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ViroARScene,
   ViroText,
@@ -32,7 +32,8 @@ const requestCameraPermission = async () => {
 
 // AR 씬 컴포넌트
 const HelloWorldSceneAR = () => {
-  const [text, setText] = React.useState('AR 초기화 중...');
+  const [text, setText] = React.useState('Start AR');
+  const [currentMaterial, setCurrentMaterial] = useState('redBox');
 
   useEffect(() => {
     requestCameraPermission();
@@ -40,16 +41,19 @@ const HelloWorldSceneAR = () => {
 
   function onInitialized(state) {
     if (state === 'TRACKING_NORMAL') {
-      setText('AR이 준비되었습니다!');
+      setText('AR is ready');
     } else if (state === 'TRACKING_NONE') {
-      setText('주변을 천천히 스캔해주세요...');
+      setText('Scan Slowly Please');
     }
   }
 
-  // 머티리얼 정의
+  // 머티리얼 정의 - 빨간색과 초록색 두 가지
   ViroMaterials.createMaterials({
-    grid: {
+    redBox: {
       diffuseColor: 'rgba(200, 100, 100, 0.7)',
+    },
+    greenBox: {
+      diffuseColor: 'rgba(100, 200, 100, 0.7)',
     },
   });
 
@@ -75,10 +79,11 @@ const HelloWorldSceneAR = () => {
       <ViroBox
         position={[0, -0.5, -1]}
         scale={[0.3, 0.3, 0.3]}
-        materials={['grid']}
+        materials={[currentMaterial]}
         animation={{name: 'rotate', loop: true, run: true}}
         onClick={() => {
-          setText('박스를 클릭하셨네요!');
+          // 클릭할 때마다 색상 토글
+          setCurrentMaterial(currentMaterial === 'redBox' ? 'greenBox' : 'redBox');
         }}
       />
     </ViroARScene>

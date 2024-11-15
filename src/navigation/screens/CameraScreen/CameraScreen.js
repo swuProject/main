@@ -85,7 +85,7 @@ const CameraStackScreen = () => {
         name="ARScreen"
         component={ARScreen}
         options={{
-          title: "AR 체험",
+          title: "AR",
           headerTitleAlign: 'center',
           headerTitleStyle: {
             fontSize: 24,
