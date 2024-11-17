@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import {
   ViroARScene,
-  ViroText,
-  ViroBox,
+  Viro3DObject,
   ViroMaterials,
   ViroAnimations,
   ViroARSceneNavigator,
+  ViroAmbientLight,
+  ViroDirectionalLight,
 } from '@reactvision/react-viro';
 import { StyleSheet, PermissionsAndroid, Platform } from 'react-native';
 import * as Location from 'expo-location';
@@ -35,9 +36,11 @@ const requestCameraPermission = async () => {
 // 마커 재질 정의
 ViroMaterials.createMaterials({
   capsuleMaterial: {
-    lightingModel: 'Blinn',  // 조명 모델 추가
-    diffuseColor: '#64C8FF',  // RGB 형식으로 변경
-    transparency: 0.7,        // 투명도 별도 설정
+    lightingModel: 'PBR',
+    roughness: 0.4,
+    metalness: 0.1,
+    diffuseColor: '#FFFFFF',
+    diffuseTexture: require('./gift_box/11563_gift_box_diffuse.jpg'),
   },
   activeCapsuleMaterial: {
     lightingModel: 'Blinn',
@@ -231,30 +234,39 @@ const HelloWorldSceneAR = () => {
 
   return (
     <ViroARScene onTrackingUpdated={onInitialized}>
+      <ViroAmbientLight color="#FFFFFF" intensity={300}/>
+      <ViroDirectionalLight
+        color="#FFFFFF"
+        direction={[0, -1, -2]}
+        intensity={300}
+        castsShadow={true}
+      />
+      
       {currentLocation && filterByDistance(capsuleLocations).map(capsule => (
-        <React.Fragment key={capsule.id}>
-          <ViroBox
-            position={calculateARPosition(capsule.latitude, capsule.longitude)}
-            scale={[0.2, 0.2, 0.2]}
-            materials={['capsuleMaterial']}
-            animation={{name: 'rotate', loop: true, run: true}}
-            onClick={() => {
-              // 클릭 이벤트 처리
-              console.log('캡슐 클릭:', capsule.id);
-            }}
-          />
-          <ViroText
-            text={`D-${capsule.remindDate}\n${capsule.title}\n${Math.round(capsule.distance)}m`}
-            scale={[0.3, 0.3, 0.3]}
-            position={[
-              ...calculateARPosition(capsule.latitude, capsule.longitude)
-                .map((coord, idx) => idx === 1 ? coord + 0.3 : coord)
-            ]}
-            style={styles.markerTextStyle}
-            extrusionDepth={2}  // 텍스트 두께
-            outerStroke={{type:"Outline", width:2, color:'#000000'}}  // 텍스트 외곽선
-          />
-        </React.Fragment>
+        <Viro3DObject
+          key={capsule.id}
+          source={require('./gift_box/11563_gift_box_V3obj.obj')}
+          resources={[
+            require('./gift_box/11563_gift_box_V3mtl.mtl'),
+            require('./gift_box/11563_gift_box_diffuse.jpg'),
+            require('./gift_box/11563_gift_box_bow_diffuse.jpg'),
+            require('./gift_box/Map__1_Normal Bump.jpg')
+          ]}
+          position={calculateARPosition(capsule.latitude, capsule.longitude)}
+          rotation={[-90, 0, 0]}
+          scale={[0.02, 0.02, 0.02]}
+          type="OBJ"
+          materials={['capsuleMaterial']}
+          animation={{
+            name: 'rotate',
+            loop: true,
+            run: true,
+            delay: 1000
+          }}
+          onClick={() => {
+            console.log('캡슐 클릭:', capsule.id);
+          }}
+        />
       ))}
     </ViroARScene>
   );
