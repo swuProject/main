@@ -8,7 +8,7 @@ import {
   ViroAmbientLight,
   ViroDirectionalLight,
 } from '@reactvision/react-viro';
-import { StyleSheet, PermissionsAndroid, Platform } from 'react-native';
+import { StyleSheet, PermissionsAndroid, Platform, View, Text, TouchableOpacity } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -60,7 +60,7 @@ ViroAnimations.registerAnimations({
 });
 
 // AR 씬 컴포넌트
-const HelloWorldSceneAR = () => {
+const HelloWorldSceneAR = ({ onSelectCapsule }) => {
   const [text, setText] = React.useState('Start AR');
   const [currentLocation, setCurrentLocation] = useState(null);
   const [capsuleLocations, setCapsuleLocations] = useState([]);
@@ -203,7 +203,8 @@ const HelloWorldSceneAR = () => {
         latitude: capsule.latitude,
         longitude: capsule.longitude,
         title: capsule.content?.substring(0, 10) + '...',
-        remindDate: capsule.remindDate,
+        content: capsule.content,
+        imagePath: capsule.imageList?.[0]?.imagePath,
         distance: 0
       }));
 
@@ -232,6 +233,15 @@ const HelloWorldSceneAR = () => {
     }
   };
 
+  const handleCapsuleClick = (capsule) => {
+    try {
+      console.log('캡슐 클릭됨:', capsule.id);
+      onSelectCapsule(capsule.content || '내용이 없습니다.');
+    } catch (error) {
+      console.error('캡슐 클릭 처리 중 오류:', error);
+    }
+  };
+
   return (
     <ViroARScene onTrackingUpdated={onInitialized}>
       <ViroAmbientLight color="#FFFFFF" intensity={300}/>
@@ -239,7 +249,6 @@ const HelloWorldSceneAR = () => {
         color="#FFFFFF"
         direction={[0, -1, -2]}
         intensity={300}
-        castsShadow={true}
       />
       
       {currentLocation && filterByDistance(capsuleLocations).map(capsule => (
@@ -257,15 +266,8 @@ const HelloWorldSceneAR = () => {
           scale={[0.02, 0.02, 0.02]}
           type="OBJ"
           materials={['capsuleMaterial']}
-          animation={{
-            name: 'rotate',
-            loop: true,
-            run: true,
-            delay: 1000
-          }}
-          onClick={() => {
-            console.log('캡슐 클릭:', capsule.id);
-          }}
+          animation={{name: 'rotate', loop: true, run: true, delay: 1000}}
+          onClick={() => handleCapsuleClick(capsule)}
         />
       ))}
     </ViroARScene>
@@ -290,20 +292,88 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 // 메인 AR 스크린 컴포넌트
 const ARScreen = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedContent, setSelectedContent] = useState('');
+
+  const handleCapsuleSelect = (content) => {
+    setSelectedContent(content);
+    setModalVisible(true);
+  };
+
   return (
-    <ViroARSceneNavigator
-      autofocus={true}
-      initialScene={{
-        scene: HelloWorldSceneAR,
-      }}
-      style={styles.f1}
-    />
+    <View style={styles.container}>
+      <ViroARSceneNavigator
+        autofocus={true}
+        initialScene={{
+          scene: () => <HelloWorldSceneAR onSelectCapsule={handleCapsuleSelect} />,
+        }}
+        style={styles.arView}
+      />
+      {modalVisible && (
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>타임캡슐 발견 !</Text>
+            <Text style={styles.modalText}>{selectedContent}</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>닫기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  f1: {
+  container: {
     flex: 1,
+  },
+  arView: {
+    flex: 1,
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 15,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#000',
+  },
+  modalText: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  closeButton: {
+    backgroundColor: '#2196F3',
+    padding: 10,
+    borderRadius: 8,
+    minWidth: 100,
+  },
+  closeButtonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   markerTextStyle: {
     fontFamily: 'Arial',
@@ -312,6 +382,54 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
     textAlign: 'center',
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%'
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#000'
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 24
+  },
+  closeButton: {
+    backgroundColor: "black",
+    borderRadius: 10,
+    padding: 10,
+    elevation: 2,
+    marginTop: 10
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingHorizontal: 20
+  }
 });
 
 export default ARScreen;
