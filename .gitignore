@@ -33,3 +33,17 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# 3D 모델 파일들
+*.obj
+*.mtl
+*.fbx
+*.blend
+*.dae
+*.3ds
+*.max
+
+# 텍스처 파일들
+*.jpg
+*.png
+*.tga
