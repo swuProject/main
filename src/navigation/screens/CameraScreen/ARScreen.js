@@ -8,7 +8,7 @@ import {
   ViroAmbientLight,
   ViroDirectionalLight,
 } from '@reactvision/react-viro';
-import { StyleSheet, PermissionsAndroid, Platform, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, PermissionsAndroid, Platform, View, Text, TouchableOpacity, Image } from 'react-native';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -236,7 +236,10 @@ const HelloWorldSceneAR = ({ onSelectCapsule }) => {
   const handleCapsuleClick = (capsule) => {
     try {
       console.log('캡슐 클릭됨:', capsule.id);
-      onSelectCapsule(capsule.content || '내용이 없습니다.');
+      onSelectCapsule({
+        content: capsule.content || '내용이 없습니다.',
+        imagePath: capsule.imagePath
+      });
     } catch (error) {
       console.error('캡슐 클릭 처리 중 오류:', error);
     }
@@ -294,9 +297,11 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 const ARScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedContent, setSelectedContent] = useState('');
+  const [selectedImage, setSelectedImage] = useState('');
 
-  const handleCapsuleSelect = (content) => {
-    setSelectedContent(content);
+  const handleCapsuleSelect = (capsuleData) => {
+    setSelectedContent(capsuleData.content);
+    setSelectedImage(capsuleData.imagePath);
     setModalVisible(true);
   };
 
@@ -313,6 +318,13 @@ const ARScreen = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>타임캡슐 발견 !</Text>
+            {selectedImage && (
+              <Image 
+                source={{ uri: selectedImage }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+            )}
             <Text style={styles.modalText}>{selectedContent}</Text>
             <TouchableOpacity
               style={styles.closeButton}
@@ -429,7 +441,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     paddingHorizontal: 20
-  }
+  },
+  modalImage: {
+    width: '100%',
+    height: 200,
+    marginBottom: 15,
+    borderRadius: 8,
+  },
 });
 
 export default ARScreen;
