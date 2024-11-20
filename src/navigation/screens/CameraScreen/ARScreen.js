@@ -169,16 +169,15 @@ const HelloWorldSceneAR = ({ onSelectCapsule }) => {
   // 타임캡슐 데이터 가져오기
   const fetchCapsuleLocations = async () => {
     try {
-      const profileId = await AsyncStorage.getItem('profileId');
       const accessToken = await AsyncStorage.getItem('accessToken');
 
-      if (!profileId || !accessToken) {
-        console.error('프로필 ID 또는 액세스 토큰이 없습니다.');
+      if (!accessToken) {
+        console.error('액세스 토큰이 없습니다.');
         return;
       }
 
       const response = await fetch(
-        `https://tuituiworld.store/api/profiles/${profileId}/capsules?pageNo=0&pageSize=20&sortBy=writeAt`,
+        `https://tuituiworld.store/api/capsules?pageNo=0&pageSize=10&sortBy=writeAt`,
         {
           method: 'GET',
           headers: {
